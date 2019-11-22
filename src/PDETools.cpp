@@ -76,10 +76,10 @@ float squareWave(float t,float T,float ubsl,float uhigh,float ulow)
 }
 
 // I/O
-void print(float* u,int N,string filename,int nt)
+void print(float* u,int N,string filename)
 {
   ofstream file;
-  file.open(filename+to_string(nt)+".csv");
+  file.open(filename);
   for (int i = 0; i < N; i++)
   {
     file << u[i] << endl;
@@ -138,4 +138,56 @@ time_writer::time_writer(string filename)
 time_writer::~time_writer()
 {
   out.close();
+}
+
+model::model(float alpha,float beta,float ub,float km)
+{
+  this->alpha = alpha;
+  this->beta = beta;
+  this->gamma = 1.0f;
+  this->ub = ub;
+  this->km = km;
+}
+
+model::model(float alpha,float beta,float gamma,float ub,float km)
+{
+  this->alpha = alpha;
+  this->beta = beta;
+  this->gamma = gamma;
+  this->ub = ub;
+  this->km = km;
+}
+
+grid::grid(int Nx,int Ny,int Nz,float dt,float ay,float az)
+{
+  this->Nx = Nx;
+  this->Ny = Ny;
+  this->Nz = Nz;
+  this->N = Nx*Ny*Nz;
+  this->dt = dt;
+  this->dx = 1.0f/(Nx-1);
+  this->dy = ay/(Ny-1);
+  this->dz = az/(Nz-1);
+}
+
+geometry::geometry(float L,float H,float W,float l,float h)
+{
+  this->L = L;
+  this->H = H;
+  this->W = W;
+  this->l = l;
+  this->h = h;
+  this->xs = 0.0f;
+  this->ys = 0.0f;
+}
+
+geometry::geometry(float L,float H,float W,float l,float h,float xs,float ys)
+{
+  this->L = L;
+  this->H = H;
+  this->W = W;
+  this->l = l;
+  this->h = h;
+  this->xs = xs;
+  this->ys = ys;
 }

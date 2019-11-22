@@ -17,30 +17,13 @@ __device__ int at(int i,int j,int k)
 // GPU Central Difference
 __device__ float CDM(float* u,int i,int j,int k)
 { 
-  return (u[at(i+1,j,k)]-2*u[at(i,j,k)]+u[at(i-1,j,k)])/dx/dx 
+  return gam*(u[at(i+1,j,k)]-2*u[at(i,j,k)]+u[at(i-1,j,k)])/dx/dx 
        + (u[at(i,j+1,k)]-2*u[at(i,j,k)]+u[at(i,j-1,k)])/dy/dy
        + (u[at(i,j,k+1)]-2*u[at(i,j,k)]+u[at(i,j,k-1)])/dz/dz;
 }
 
-// GPU Forward Difference
-__device__ void forwardEuler(float* u_old,float* u_new,float alpha,float ub,float beta,float km,float BC,float h,int i,int j,int k)
-{
-  // Apply Boundary Conditions
-  int n = at(i,j,k);
-  // Fixed Value BC at Window 
-  if (windowBC(i,j,k))
-  {
-    u_new[n] = BC;
-  }
-  // Zero Flux  
-  else
-  {
-    u_new[n] = u_old[n] + h*(CDM(u_old,i,j,k)+alpha*(ub-u_old[at(i,j,k)])-beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)]));
-  }
-}
-
 // GPU Implicit-Explicit
-__device__ void imex(float* u_old,float* u_new,float alpha,float ub,float beta,float km,float BC,float h,int i,int j,int k)
+__device__ void imex(float* u_old,float* u_new,float BC,int i,int j,int k)
 {
   // Apply Boundary Conditions
   int n = at(i,j,k);
@@ -52,18 +35,22 @@ __device__ void imex(float* u_old,float* u_new,float alpha,float ub,float beta,f
   // Zero Flux  
   else
   {
-    u_new[n] = (u_old[n] + h*(CDM(u_old,i,j,k) + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(1+alpha*h);
+    u_new[n] = (u_old[n] + dt*(CDM(u_old,i,j,k) + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(1+alpha*dt);
   }
 }
 
 // GPU Time Step Kernel
-__global__ void step(float* u_old,float* u_new,float alpha,float ub,float beta,float km,float BC,
-                     int nx,int ny,int nz,float hx,float hy,float hz,float h)
+__global__ void step(float* u_old,float* u_new,float BC,model mdl,grid grd,geometry geo)
 { 
   // Set GPU Variables
-  Nx = nx; dx = hx;
-  Ny = ny; dy = hy;
-  Nz = nz; dz = hz;
+  alpha = mdl.alpha; ub = mdl.ub;
+  beta = mdl.gamma; km = mdl.km;
+  gam = mdl.gamma; 
+  Nx = grd.Nx; dx = grd.dx;
+  Ny = grd.Ny; dy = grd.dy;
+  Nz = grd.Nz; dz = grd.dz;
+  L = geo.L; l = geo.l;
+  H = geo.H; h = geo.h;
   
   // Determine Position within array
   int ATOM_SIZE_X = Nx/(blockDim.x*gridDim.x);
@@ -82,7 +69,7 @@ __global__ void step(float* u_old,float* u_new,float alpha,float ub,float beta,f
       for (k = k0; k < k0+ATOM_SIZE_Z; k++)
       {
         // Call Time Scheme
-        imex(u_old,u_new,alpha,ub,beta,km,BC,h,i,j,k);
+        imex(u_old,u_new,BC,i,j,k);
       }
     }
   }
@@ -108,48 +95,40 @@ __global__ void step(float* u_old,float* u_new,float alpha,float ub,float beta,f
 // Window Boundary Condition
 __device__ bool windowBC(int i,int j,int k)
 {   
-  // Domain Dimensions (cm)
-  // *must be consistant with simulation
-  float W = 0.2f,H = 0.2f; 
-
-  // Window Dimensions (cm)
-  // float w = 0.04f,h = 0.02f; // my window
-  float w = 0.06f,h = 0.03f; // Graham's window
-  
   // Relative Window Dimensions 
-  float w_ = w/W,h_ = h/H;
+  float l_ = l/L,h_ = h/H;
    
-  return abs(2*i*dx-1)<=w_ & abs(2*j*dy-1)<= h_ & k==0;
+  return abs(2*i*dx-1)<=l_ & abs(2*j*dy-1)<= h_ & k==0;
 }
 // Five Windows Boundary Condition
 __device__ bool fiveWindowsBC(int i,int j,int k)
 {
   // Domain Dimensions (cm)
   // *must be consistant with simulation
-  float W = 0.52f,H = 0.44f; 
+  // float W = 0.52f,H = 0.44f; 
 
   // Window Dimensions (cm)
-  float w = 0.04f,h = 0.02f; 
+  // float w = 0.04f,h = 0.02f; 
   
   // Window Spacing (cm)
-  float xs = 0.1f,ys = 0.2f;
+  // float xs = 0.1f,ys = 0.2f;
   
   // Relative Window Dimensions 
-  float w_ = w/W,h_ = h/H;
-  float xs_ = xs/W,ys_ = ys/H;
+  float l_ = l/L,h_ = h/H;
+  float xs_ = xs/L,ys_ = ys/H;
   
   // Windows
   float x0,y0;
-  x0 = (1+w_+xs_)/2; y0 = (1+h_+ys_)/2;
-  bool window1 = abs(2*(i*dx-x0))<=w_ & abs(2*(j*dy-y0))<=h_ & k==0; 
-  x0 = (1-w_-xs_)/2; y0 = (1+h_+ys_)/2;
-  bool window2 = abs(2*(i*dx-x0))<=w_ & abs(2*(j*dy-y0))<=h_ & k==0; 
-  x0 = 0.5-w_-xs_; y0 = (1-h_-ys_)/2;
-  bool window3 = abs(2*(i*dx-x0))<=w_ & abs(2*(j*dy-y0))<=h_ & k==0; 
+  x0 = (1+l_+xs_)/2; y0 = (1+h_+ys_)/2;
+  bool window1 = abs(2*(i*dx-x0))<=l_ & abs(2*(j*dy-y0))<=h_ & k==0; 
+  x0 = (1-l_-xs_)/2; y0 = (1+h_+ys_)/2;
+  bool window2 = abs(2*(i*dx-x0))<=l_ & abs(2*(j*dy-y0))<=h_ & k==0; 
+  x0 = 0.5-l_-xs_; y0 = (1-h_-ys_)/2;
+  bool window3 = abs(2*(i*dx-x0))<=l_ & abs(2*(j*dy-y0))<=h_ & k==0; 
   x0 = 0.5; y0 = (1-h_-ys_)/2;
-  bool window4 = abs(2*(i*dx-x0))<=w_ & abs(2*(j*dy-y0))<=h_ & k==0; 
-  x0 = 0.5+w_+xs_; y0 = (1-h_-ys_)/2;
-  bool window5 = abs(2*(i*dx-x0))<=w_ & abs(2*(j*dy-y0))<=h_ & k==0; 
+  bool window4 = abs(2*(i*dx-x0))<=l_ & abs(2*(j*dy-y0))<=h_ & k==0; 
+  x0 = 0.5+l_+xs_; y0 = (1-h_-ys_)/2;
+  bool window5 = abs(2*(i*dx-x0))<=l_ & abs(2*(j*dy-y0))<=h_ & k==0; 
   
   return window1 | window2 | window3 | window4 | window5;
 }

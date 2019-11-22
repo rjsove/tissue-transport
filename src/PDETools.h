@@ -7,7 +7,7 @@ void stepIC(float* u,int Nx,int Ny,int Nz);
 void constIC(float* u,float u0,int Nx,int Ny,int Nz);
 void varIC(float* u,std::string filename,int N);
 float squareWave(float t,float T,float ubsl,float uhigh,float ulow);
-void print(float* u,int N,std::string filename,int nt);
+void print(float* u,int N,std::string filename);
 
 class print_scheduler
 {
@@ -33,6 +33,30 @@ public:
   }
 private:
   std::ofstream out;
+};
+
+class model 
+{
+public:
+  model(float alpha,float beta,float ub,float km);  
+  model(float alpha,float beta,float gamma,float ub,float km);  
+  float alpha,beta,gamma,ub,km;
+};
+
+class grid 
+{
+public:
+  grid(int Nx,int Ny,int Nz,float dt,float ay,float az);
+  int Nx,Ny,Nz,N;
+  float dt,dx,dy,dz;
+};
+
+class geometry
+{
+public:
+  geometry(float L,float H,float W,float w,float h);
+  geometry(float L,float H,float W,float w,float h,float xs,float ys);
+  float L,H,W,l,h,xs,ys;
 };
 
 #endif

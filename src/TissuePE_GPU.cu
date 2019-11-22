@@ -13,7 +13,8 @@ int main(int argc,char** argv)
   float C0 = 1e-2f; // <M>
   
   // Output Filename (user input)
-  string filename_out = "data/PE/transient_all_";
+  string dir = "out/PE/";
+  string filename = "test";
    
   // Initialize Physical Constants (user input)
   float D = 9.0e-6f; // diffusivity <cm^2/s>
@@ -24,6 +25,8 @@ int main(int argc,char** argv)
   float L = 0.2f; // tissue length <cm>
   float H = 0.2f; // tissue height <cm>
   float W = 0.06f; // tissue depth <cm>
+  float l = 0.06f; // window length <cm>
+  float w = 0.03f; // window width <cm>
   
   // Simulation Time (user input)
   float sim_time = 200.0f; // simulation time <s>
@@ -36,7 +39,6 @@ int main(int argc,char** argv)
   print_scheduler print_time(print_frequency);
   print_time.schedule(10.0f,5.0f); // (start_time <s>,frequency <s>)
   print_time.schedule(30.0f,30.0f); 
-  
   
   // Initialize Computational Domain (user input)
   int Nx = 144;
@@ -57,6 +59,9 @@ int main(int argc,char** argv)
   float u0 = 0.0f;
   
   // Calculate Computational Parameters
+  model mdl(alpha,beta,ub,km);
+  grid grd(Nx,Ny,Nz,dt,ay,az);
+  geometry geo(L,W,H,l,w);
   int N = Nx*Ny*Nz;
   size_t size = N*sizeof(float);
   float dx = 1.0f/(Nx-1.0f);
@@ -81,7 +86,7 @@ int main(int argc,char** argv)
   // Allocate Memory on Host
   float* u_h = new float[N]();
   constIC(u_h,u0,Nx,Ny,Nz); 
-  print(u_h,N,filename_out,0);
+  print(u_h,N,dir+filename+"0.csv");
   
   // Allocate Memory on Device 
   float *uold_d,*unew_d;
@@ -96,12 +101,12 @@ int main(int argc,char** argv)
   dim3 dimBlock(BLOCK_SIZE_X,BLOCK_SIZE_Y,BLOCK_SIZE_Z);
 
   // Time Iteration
-  float t = 0.0f; int np = 1; time_writer write_time("data/PE/t.csv"); write_time(t*tau);
+  float t = 0.0f; int np = 1; time_writer write_time(dir+"t.csv"); write_time(t*tau);
   float uwin = 1.0f; // Boundary Condition
   for (int nt = 1; t < T; nt++)
   { 
     // Call GPU Kernel
-    step<<<dimGrid,dimBlock>>>(uold_d,unew_d,alpha,ub,beta,km,uwin,Nx,Ny,Nz,dx,dy,dz,dt);
+    step<<<dimGrid,dimBlock>>>(uold_d,unew_d,uwin,mdl,grd,geo);
     t += dt;
     
     // Print Solution
@@ -109,7 +114,7 @@ int main(int argc,char** argv)
     {
       cout << "Writing t = " << t*tau << " s...\n";
       cudaMemcpy(u_h,unew_d,size,cudaMemcpyDeviceToHost);
-      print(u_h,N,filename_out,np);
+      print(u_h,N,dir+filename+to_string(np)+".csv");
       write_time(t*tau);
       np++;
     }
