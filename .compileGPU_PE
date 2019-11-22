@@ -1,0 +1,2 @@
+nvcc --std=c++11 -arch=sm_30 PDETools.cpp PDEsolve.cu TissuePE_GPU.cu -o runGPU
+
