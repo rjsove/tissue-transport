@@ -7,10 +7,16 @@
 #include "configuration.h"
 using namespace std;
 
-int main()
+int main(int argc,char** argv)
 {
+  // Square Wave Parameters
+  float Pbsl = 38.0f; // Baseline PO2 <mmHg>
+  float Phigh = 53.2f; // High PO2 <mmHg>
+  float Plow = 15.2f; // Low PO2 <mmHg>
+  
   // Output Filename (user input)
-  string filename_out = "data/square_wave";
+  string dir = "out/PO2/";
+  string filename = "test";
    
   // Initialize Physical Constants (user input)
   float D = 2.41e-5f; // diffusivity <cm^2/s>
@@ -22,15 +28,20 @@ int main()
   float L = 0.2f; // tissue length <cm>
   float H = 0.2f; // tissue height <cm>
   float W = 0.06f; // tissue depth <cm>
-  
-  // Square Wave Parameters
-  float Pbsl = 38.0f; // Baseline PO2 <mmHg>
-  float Phigh = 53.2f; // High PO2 <mmHg>
-  float Plow = 15.2f; // Low PO2 <mmHg>
+  float l = 0.04f; // window length <cm>
+  float h = 0.02f; // window height <cm>
   
   // Simulation Time (user input)
   float sim_time = 360.0f; // simulation time <s>
+  if (argc == 2)
+    sim_time = atof(argv[1]);
   float print_frequency = 0.25f; // print frequency <s>
+  
+  // Write-Out Schedule
+  // 0-10s: 1s, 10-30s: 5s, 30-180s: 30s
+  print_scheduler print_time(print_frequency);
+  print_time.schedule(10.0f,5.0f); // (start_time <s>,frequency <s>)
+  print_time.schedule(30.0f,30.0f);  
   
   // Initialize Computational Domain (user input)
   int Nx = 144;
@@ -39,39 +50,46 @@ int main()
   float dt = 1e-6;
   
   // Calculate Dimensionless Parameters
-  float q = VO2*L*L/(P0*D*k);
-  float ucrit = Pcrit/P0;
-  float s = K*L*L/(P0*D);
   float tau = L*L/D;
+  float alpha = K/P0*tau;
+  float ub = 1;
+  float beta = VO2/(P0*k)*tau; 
+  float km = Pcrit/P0;
   float ay = H/L;
   float az = W/L;
   
   // Calculate Computational Parameters
+  model mdl(alpha,beta,ub,km);
+  grid grd(Nx,Ny,Nz,dt,ay,az);
+  geometry geo(L,W,H,l,h);
   int N = Nx*Ny*Nz;
   size_t size = N*sizeof(float);
   float dx = 1.0f/(Nx-1.0f);
   float dy = ay/(Ny-1.0f);
   float dz = az/(Nz-1.0f);
-  float pfreq = print_frequency/tau; 
   float T = sim_time/tau;
   
   // Print Parameters
   float ds = min(min(dx,dy),dz); 
+  cout << "\n\n---Oxygen---\n\n";
   cout << "\n\nSimulation Parameters\n\n";
-  cout << "dt/dx^2 = " << dt/ds/ds << endl;
-  cout << "Runtime: " << T << endl << endl;
-  cout << "tau = " << tau << endl;
-  cout << "s = " << s << endl;
-  cout << "q = " << q << endl << endl;
-  cout << "ucrit = " << ucrit << endl;
+  cout << "Runtime: " << sim_time << " s \t\t[" << T/dt << " time steps]\n\n";
+  cout << "dt/dx^2 = " << dt/ds/ds << endl << endl;
+  cout << "tau = " << tau << " s\n";
+  cout << "P0 = " << P0 << " mmHg\n\n";
+  cout << "alpha = " << alpha << endl;
+  cout << "ub = " << ub << endl;
+  cout << "beta = " << beta << endl;
+  cout << "km = " << km << endl << endl;
+  cout << "ubsl = " << Pbsl/P0 << endl;
   cout << "uhigh = " << Phigh/P0 << endl;
   cout << "ulow = " << Plow/P0 << endl << endl;
   
   // Allocate Memory on Host
   float* u_h = new float[N]();
   //constIC(u_h,0.0f,Nx,Ny,Nz);
-  varIC(u_h,"data/baseline_steady-state1.csv",Nx*Ny*Nz);
-  print(u_h,N,filename_out,0);
+  varIC(u_h,"data/baseline_steady-state1.csv",N);
+  print(u_h,N,dir+filename+"0.csv");
   
   // Allocate Memory on Device 
   float *uold_d,*unew_d;
@@ -86,8 +104,7 @@ int main()
   dim3 dimBlock(BLOCK_SIZE_X,BLOCK_SIZE_Y,BLOCK_SIZE_Z);
 
   // Time Iteration
-  float t = 0.0f;
-  int np = 1; 
+  float t = 0.0f; int np = 1; time_writer write_time(dir+"t.csv"); write_time(t*tau);
   float uwin;
   for (int nt = 1; t < T; nt++)
   { 
@@ -96,15 +113,16 @@ int main()
     uwin = Plow/P0; // constant in time
    
     // Call GPU Kernel
-    step<<<dimGrid,dimBlock>>>(uold_d,unew_d,q,ucrit,s,uwin,Nx,Ny,Nz,dx,dy,dz,dt);
+    step<<<dimGrid,dimBlock>>>(uold_d,unew_d,uwin,mdl,grd,geo);
     t += dt;
     
     // Print Solution
-    if (t >= np*pfreq)
+    if (print_time(t*tau))
     {
       cout << "Writing t = " << t << "...\n";
       cudaMemcpy(u_h,unew_d,size,cudaMemcpyDeviceToHost);
-      print(u_h,N,filename_out,np);
+      print(u_h,N,dir+filename+to_string(np)+".csv");
+      write_time(t*tau);
       np++;
     }
   }

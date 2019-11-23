@@ -26,7 +26,7 @@ int main(int argc,char** argv)
   float H = 0.2f; // tissue height <cm>
   float W = 0.06f; // tissue depth <cm>
   float l = 0.06f; // window length <cm>
-  float w = 0.03f; // window width <cm>
+  float h = 0.03f; // window width <cm>
   
   // Simulation Time (user input)
   float sim_time = 200.0f; // simulation time <s>
@@ -61,7 +61,7 @@ int main(int argc,char** argv)
   // Calculate Computational Parameters
   model mdl(alpha,beta,ub,km);
   grid grd(Nx,Ny,Nz,dt,ay,az);
-  geometry geo(L,W,H,l,w);
+  geometry geo(L,W,H,l,h);
   int N = Nx*Ny*Nz;
   size_t size = N*sizeof(float);
   float dx = 1.0f/(Nx-1.0f);
