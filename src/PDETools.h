@@ -38,9 +38,14 @@ private:
 class model 
 {
 public:
-  model(float alpha,float beta,float ub,float km);  
-  model(float alpha,float beta,float gamma,float ub,float km);  
-  float alpha,beta,gamma,ub,km;
+  model(float alpha,float beta,float gamma,float ub,float km,float lambda,float sigma)
+    : alpha(alpha),beta(beta),gamma(gamma),ub(ub),km(km),lambda(lambda),sigma(sigma){}  
+  model(float alpha,float beta,float gamma,float ub,float km)
+    : model(alpha,beta,gamma,ub,km,1.0f,1.0f){}  
+  model(float alpha,float beta,float ub,float km) 
+    : model(alpha,beta,1.0f,ub,km,1.0f,1.0f){}
+  
+  float alpha,beta,gamma,ub,km,lambda,sigma;
 };
 
 class grid 

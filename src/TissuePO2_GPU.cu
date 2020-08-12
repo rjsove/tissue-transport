@@ -21,6 +21,8 @@ int main(int argc,char** argv)
   // Initialize Physical Constants (user input)
   float D = 2.41e-5f; // diffusivity <cm^2/s>
   float k = 3.89e-5f; // solubility <mLO2/mL/mmHg>
+  float Dpdms = 3.55e-5f; // diffusivity <cm^2/s>
+  float kpdms = 1.32e-5f; // solubility <mLO2/mL/mmHg>
   float VO2 = 1.50e-4f; // O2 consumption <mLO2/mL/s>
   float Pcrit = 0.5f; // critical PO2 <mmHg>
   float P0 = 48.0f; // capillary PO2 <mmHg>
@@ -30,6 +32,7 @@ int main(int argc,char** argv)
   float W = 0.06f; // tissue depth <cm>
   float l = 0.04f; // window length <cm>
   float h = 0.02f; // window height <cm>
+  float T = 0.002; // PDMS layer thickness <cm>
   
   // Simulation Time (user input)
   float sim_time = 360.0f; // simulation time <s>
@@ -44,9 +47,9 @@ int main(int argc,char** argv)
   print_time.schedule(30.0f,30.0f);  
   
   // Initialize Computational Domain (user input)
-  int Nx = 144;
-  int Ny = 144;
-  int Nz = 48;
+  int Nx = 576;
+  int Ny = 576;
+  int Nz = 192;
   float dt = 1e-6;
   
   // Calculate Dimensionless Parameters
@@ -55,11 +58,13 @@ int main(int argc,char** argv)
   float ub = 1;
   float beta = VO2/(P0*k)*tau; 
   float km = Pcrit/P0;
+  float lambda = Dpdms/D;
+  float sigma = lambda*kpdms/k;
   float ay = H/L;
   float az = W/L;
   
   // Calculate Computational Parameters
-  model mdl(alpha,beta,ub,km);
+  model mdl(alpha,beta,1.0f,ub,km,lambda,sigma);
   grid grd(Nx,Ny,Nz,dt,ay,az);
   geometry geo(L,W,H,l,h);
   int N = Nx*Ny*Nz;

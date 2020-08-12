@@ -1,5 +1,10 @@
 #include "PDEsolve.h"
 
+#define WINDOWBC windowBC(i,j,k)
+//#define WINDOWBC fiveWindowsBC(i,j,k)
+#define PDMS
+#define INTERFACE 6
+
 // Solves PDE du/ds = lapl(u) + alpha*(ub-u) - beta*u/(km+u)
 
 // GPU Index Evaluation
@@ -28,12 +33,23 @@ __device__ void imex(float* u_old,float* u_new,float BC,int i,int j,int k)
   // Apply Boundary Conditions
   int n = at(i,j,k);
   // Fixed Value BC at Window 
-  if (windowBC(i,j,k))
+  if (WINDOWBC)
   {
     u_new[n] = BC;
   }
-  // Zero Flux  
-  else
+  #ifdef PDMS 
+  // Interface B.C.
+  else if (k==INTERFACE)
+  {
+    u_new[n] = (u_old[n] + dt*(2*(CDMi(u_old,i,j,k)) + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(2+alpha*dt);    
+  } 
+  // PDMS
+  else if (k<INTERFACE&&k>0)
+  {
+    u_new[n] = (u_old[n] + dt*(lambda*CDM(u_old,i,j,k) + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(1+alpha*dt);
+  } 
+  #endif
+  else // Zero Flux
   {
     u_new[n] = (u_old[n] + dt*(CDM(u_old,i,j,k) + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(1+alpha*dt);
   }
@@ -45,7 +61,8 @@ __global__ void step(float* u_old,float* u_new,float BC,model mdl,grid grd,geome
   // Set GPU Variables
   alpha = mdl.alpha; ub = mdl.ub;
   beta = mdl.gamma; km = mdl.km;
-  gam = mdl.gamma; 
+  gam = mdl.gamma; lambda = mdl.lambda;
+  sigma = mdl.sigma;
   Nx = grd.Nx; dx = grd.dx;
   Ny = grd.Ny; dy = grd.dy;
   Nz = grd.Nz; dz = grd.dz;

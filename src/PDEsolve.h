@@ -14,7 +14,7 @@
 __device__ int Nx,Ny,Nz;
 __device__ float dt,dx,dy,dz;
 __device__ float L,H,W,l,h,xs,ys;
-__device__ float alpha,beta,gam,ub,km; 
+__device__ float alpha,beta,gam,ub,km,lambda,sigma; 
 __device__ float* swap;
 __device__ int at(int i,int j,int k);
 __device__ float CDM(float* u,int i,int j,int k);

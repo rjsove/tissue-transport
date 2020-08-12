@@ -140,24 +140,6 @@ time_writer::~time_writer()
   out.close();
 }
 
-model::model(float alpha,float beta,float ub,float km)
-{
-  this->alpha = alpha;
-  this->beta = beta;
-  this->gamma = 1.0f;
-  this->ub = ub;
-  this->km = km;
-}
-
-model::model(float alpha,float beta,float gamma,float ub,float km)
-{
-  this->alpha = alpha;
-  this->beta = beta;
-  this->gamma = gamma;
-  this->ub = ub;
-  this->km = km;
-}
-
 grid::grid(int Nx,int Ny,int Nz,float dt,float ay,float az)
 {
   this->Nx = Nx;
