@@ -18,6 +18,7 @@ __device__ float alpha,beta,gam,ub,km,lambda,sigma;
 __device__ float* swap;
 __device__ int at(int i,int j,int k);
 __device__ float CDM(float* u,int i,int j,int k);
+__device__ float CDMi(float* u,int i,int j,int k);
 __device__ void imex(float* u_old,float* u_new,float BC,int i,int j,int k);
 __global__ void step(float* uold_d,float* unew_d,float BC,model,grid,geometry);
 __device__ bool windowBC(int i,int j,int k);

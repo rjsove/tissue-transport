@@ -17,6 +17,8 @@ int main(int argc,char** argv)
   // Output Filename (user input)
   string dir = "out/PO2/";
   string filename = "test";
+  int dim = 1;
+  int slc = 144;
    
   // Initialize Physical Constants (user input)
   float D = 2.41e-5f; // diffusivity <cm^2/s>
@@ -32,25 +34,25 @@ int main(int argc,char** argv)
   float W = 0.06f; // tissue depth <cm>
   float l = 0.04f; // window length <cm>
   float h = 0.02f; // window height <cm>
-  float T = 0.002; // PDMS layer thickness <cm>
+  //float th = 0.004; // PDMS layer thickness <cm>
   
   // Simulation Time (user input)
-  float sim_time = 360.0f; // simulation time <s>
+  float sim_time = 1.0f; // simulation time <s> was 360.0f
   if (argc == 2)
     sim_time = atof(argv[1]);
-  float print_frequency = 0.25f; // print frequency <s>
+  float print_frequency = 0.5f; // print frequency <s> was 0.25f
   
   // Write-Out Schedule
   // 0-10s: 1s, 10-30s: 5s, 30-180s: 30s
   print_scheduler print_time(print_frequency);
-  print_time.schedule(10.0f,5.0f); // (start_time <s>,frequency <s>)
-  print_time.schedule(30.0f,30.0f);  
+  //print_time.schedule(10.0f,5.0f); // (start_time <s>,frequency <s>) 
+  //print_time.schedule(30.0f,30.0f);  
   
   // Initialize Computational Domain (user input)
-  int Nx = 576;
-  int Ny = 576;
-  int Nz = 192;
-  float dt = 1e-6;
+  int Nx = 576; // 288, 144
+  int Ny = 288; // 288, 144
+  int Nz = 192; // 96, 48 
+  float dt = 1e-6; // was 1e-6
   
   // Calculate Dimensionless Parameters
   float tau = L*L/D;
@@ -92,9 +94,9 @@ int main(int argc,char** argv)
   
   // Allocate Memory on Host
   float* u_h = new float[N]();
-  //constIC(u_h,0.0f,Nx,Ny,Nz);
-  varIC(u_h,"data/baseline_steady-state1.csv",N);
-  print(u_h,N,dir+filename+"0.csv");
+  constIC(u_h,1.0f,Nx,Ny,Nz);
+  //varIC(u_h,"data/baseline_steady-state1.csv",N);
+  print(u_h,Nx,Ny,Nz,dim,slc,dir+filename+"0.csv");
   
   // Allocate Memory on Device 
   float *uold_d,*unew_d;
@@ -113,6 +115,7 @@ int main(int argc,char** argv)
   float uwin;
   for (int nt = 1; t < T; nt++)
   { 
+    cout << "Start Simulation\n";
     // Boundary Condition
     //uwin = squareWave(t,T,Pbsl/P0,Phigh/P0,Plow/P0); // square wave in time
     uwin = Plow/P0; // constant in time
@@ -126,7 +129,7 @@ int main(int argc,char** argv)
     {
       cout << "Writing t = " << t << "...\n";
       cudaMemcpy(u_h,unew_d,size,cudaMemcpyDeviceToHost);
-      print(u_h,N,dir+filename+to_string(np)+".csv");
+      print(u_h,Nx,Ny,Nz,dim,slc,dir+filename+to_string(np)+".csv");
       write_time(t*tau);
       np++;
     }

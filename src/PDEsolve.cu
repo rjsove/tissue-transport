@@ -2,8 +2,10 @@
 
 #define WINDOWBC windowBC(i,j,k)
 //#define WINDOWBC fiveWindowsBC(i,j,k)
+
+// Comment out if not using PDMS layer
 #define PDMS
-#define INTERFACE 6
+#define INTERFACE 6 // make sure this corresponds to number of node in PDMS layer
 
 // Solves PDE du/ds = lapl(u) + alpha*(ub-u) - beta*u/(km+u)
 
@@ -27,13 +29,29 @@ __device__ float CDM(float* u,int i,int j,int k)
        + (u[at(i,j,k+1)]-2*u[at(i,j,k)]+u[at(i,j,k-1)])/dz/dz;
 }
 
+// Central Difference at Interface (isotropic only: gamma==1.0)
+__device__ float CDMi(float* u,int i,int j,int k)
+{
+  return (u[at(i+1,j,k)]-2*u[at(i,j,k)]+u[at(i-1,j,k)])/dx/dx/2   
+       + (u[at(i+1,j,k)]-2*u[at(i,j,k)]+u[at(i-1,j,k)])/dx/dx*sigma/2 
+       + (u[at(i,j+1,k)]-2*u[at(i,j,k)]+u[at(i,j-1,k)])/dy/dy/2
+       + (u[at(i,j+1,k)]-2*u[at(i,j,k)]+u[at(i,j-1,k)])/dy/dy*sigma/2
+       + (u[at(i,j,k+1)]-u[at(i,j,k)])/dz/dz*lambda;
+       + (u[at(i,j,k-1)]-u[at(i,j,k)])/dz/dz; 
+}
+
 // GPU Implicit-Explicit
 __device__ void imex(float* u_old,float* u_new,float BC,int i,int j,int k)
 {
   // Apply Boundary Conditions
   int n = at(i,j,k);
   // Fixed Value BC at Window 
-  if (WINDOWBC)
+  if (k==0)
+  {
+    u_new[n] = 0.0;
+  }
+  else if (k==Nz-1)
+  //if (WINDOWBC)
   {
     u_new[n] = BC;
   }

@@ -8,6 +8,7 @@ void constIC(float* u,float u0,int Nx,int Ny,int Nz);
 void varIC(float* u,std::string filename,int N);
 float squareWave(float t,float T,float ubsl,float uhigh,float ulow);
 void print(float* u,int N,std::string filename);
+void print(float* u,int Nx,int Ny,int Nz,int dim,int slc,std::string filename);
 
 class print_scheduler
 {

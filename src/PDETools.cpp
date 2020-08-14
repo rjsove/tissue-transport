@@ -87,6 +87,28 @@ void print(float* u,int N,string filename)
   file.close();
 }
 
+void print(float* u,int Nx,int Ny,int Nz,int dim,int slc,std::string filename)
+{
+  ofstream file;
+  file.open(filename);
+  for (int i = (dim==1 ? slc:0); i < (dim==1 ? slc+1:Nx); i++) 
+  {
+    for (int j = (dim==2 ? slc:0); j < (dim==2 ? slc+1:Ny); j++) 
+    {
+      for (int k = (dim==3 ? slc:0); k < (dim==3 ? slc+1:Nz); k++)
+      {
+        file << u[i+Nx*(j+Ny*k)] << " "; 
+      }
+      // here for fixed 
+      if (dim==1) 
+        file << "\n";
+    }
+    if (dim!=1)
+      file << "\n";
+  }
+  file.close();
+}
+
 print_scheduler::print_scheduler(float print_frequency)
 {
   // Set Schedule Count
