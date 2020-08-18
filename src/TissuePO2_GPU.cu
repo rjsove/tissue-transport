@@ -50,16 +50,16 @@ int main(int argc,char** argv)
   
   // Initialize Computational Domain (user input)
   int Nx = 576; // 288, 144
-  int Ny = 288; // 288, 144
+  int Ny = 576; // 288, 144
   int Nz = 192; // 96, 48 
   float dt = 1e-6; // was 1e-6
   
   // Calculate Dimensionless Parameters
   float tau = L*L/D;
-  float alpha = K/P0*tau;
+  float alpha = 0.0f;// K/P0*tau;
   float ub = 1;
   float beta = VO2/(P0*k)*tau; 
-  float km = Pcrit/P0;
+  float km = 1e-9;//Pcrit/P0;
   float lambda = Dpdms/D;
   float sigma = lambda*kpdms/k;
   float ay = H/L;
@@ -115,7 +115,7 @@ int main(int argc,char** argv)
   float uwin;
   for (int nt = 1; t < T; nt++)
   { 
-    cout << "Start Simulation\n";
+    cout << "t = " << t << "\r" << flush;
     // Boundary Condition
     //uwin = squareWave(t,T,Pbsl/P0,Phigh/P0,Plow/P0); // square wave in time
     uwin = Plow/P0; // constant in time
