@@ -56,7 +56,7 @@ int main(int argc,char** argv)
   
   // Calculate Dimensionless Parameters
   float tau = L*L/D;
-  float alpha = K/P0*tau;
+  float alpha = 0.0f;//K/P0*tau;
   float ub = 1;
   float beta = VO2/(P0*k)*tau; 
   float km = 1e-9;//Pcrit/P0;
