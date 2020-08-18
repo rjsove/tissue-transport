@@ -18,7 +18,7 @@ int main(int argc,char** argv)
   string dir = "out/PO2/";
   string filename = "test";
   int dim = 1;
-  int slc = 144;
+  int slc = 288;
    
   // Initialize Physical Constants (user input)
   float D = 2.41e-5f; // diffusivity <cm^2/s>
@@ -49,14 +49,14 @@ int main(int argc,char** argv)
   //print_time.schedule(30.0f,30.0f);  
   
   // Initialize Computational Domain (user input)
-  int Nx = 576; // 288, 144
-  int Ny = 576; // 288, 144
-  int Nz = 192; // 96, 48 
+  int Nx = 144; // 576, 288, 144
+  int Ny = 144; // 576, 288, 144
+  int Nz = 48; // 192, 96, 48 
   float dt = 1e-6; // was 1e-6
   
   // Calculate Dimensionless Parameters
   float tau = L*L/D;
-  float alpha = 0.0f;// K/P0*tau;
+  float alpha = K/P0*tau;
   float ub = 1;
   float beta = VO2/(P0*k)*tau; 
   float km = 1e-9;//Pcrit/P0;
@@ -115,7 +115,6 @@ int main(int argc,char** argv)
   float uwin;
   for (int nt = 1; t < T; nt++)
   { 
-    cout << "t = " << t << "\r" << flush;
     // Boundary Condition
     //uwin = squareWave(t,T,Pbsl/P0,Phigh/P0,Plow/P0); // square wave in time
     uwin = Plow/P0; // constant in time
