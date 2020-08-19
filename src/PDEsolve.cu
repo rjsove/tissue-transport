@@ -58,7 +58,7 @@ __device__ void imex(float* u_old,float* u_new,float BC,int i,int j,int k)
   // Interface B.C.
   else if (k==INTERFACE)
   {
-    u_new[n] = (u_old[n] + dt*(2*(CDMi(u_old,i,j,k)) + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(2+alpha*dt);    
+    u_new[n] = 0.0f;//(u_old[n] + dt*(2*(CDMi(u_old,i,j,k)) + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(2+alpha*dt);    
   } 
   // PDMS and Zero Flux Boundaries
   else if (k<INTERFACE&&k>0)

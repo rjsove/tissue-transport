@@ -31,10 +31,10 @@ int main(int argc,char** argv)
   //float th = 0.004; // PDMS layer thickness <cm>
   
   // Simulation Time (user input)
-  float sim_time = 1.0f; // simulation time <s> was 360.0f
+  float sim_time = 750.0f; // simulation time <s> was 360.0f
   if (argc == 2)
     sim_time = atof(argv[1]);
-  float print_frequency = 0.5f; // print frequency <s> was 0.25f
+  float print_frequency = 750.0f; // print frequency <s> was 0.25f
   
   // Write-Out Schedule
   // 0-10s: 1s, 10-30s: 5s, 30-180s: 30s
