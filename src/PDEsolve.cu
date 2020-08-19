@@ -32,12 +32,10 @@ __device__ float CDM(float* u,int i,int j,int k)
 // Central Difference at Interface (isotropic only: gamma==1.0)
 __device__ float CDMi(float* u,int i,int j,int k)
 {
-  return (u[at(i+1,j,k)]-2*u[at(i,j,k)]+u[at(i-1,j,k)])/dx/dx/2   
-       + (u[at(i+1,j,k)]-2*u[at(i,j,k)]+u[at(i-1,j,k)])/dx/dx*sigma/2 
-       + (u[at(i,j+1,k)]-2*u[at(i,j,k)]+u[at(i,j-1,k)])/dy/dy/2
-       + (u[at(i,j+1,k)]-2*u[at(i,j,k)]+u[at(i,j-1,k)])/dy/dy*sigma/2
-       + (u[at(i,j,k+1)]-u[at(i,j,k)])/dz/dz*lambda;
-       + (u[at(i,j,k-1)]-u[at(i,j,k)])/dz/dz; 
+  return (1+sigma)*((u[at(i+1,j,k)]-2*u[at(i,j,k)]+u[at(i-1,j,k)])/dx/dx/2    
+       + (u[at(i,j+1,k)]-2*u[at(i,j,k)]+u[at(i,j-1,k)])/dy/dy/2)
+       + (u[at(i,j,k+1)]-u[at(i,j,k)])/dz/dz
+       + sigma*(u[at(i,j,k-1)]-u[at(i,j,k)])/dz/dz; 
 }
 
 // GPU Implicit-Explicit
@@ -58,7 +56,8 @@ __device__ void imex(float* u_old,float* u_new,float BC,int i,int j,int k)
   // Interface B.C.
   else if (k==INTERFACE)
   {
-    u_new[n] = 1.0f;//(u_old[n] + dt*(2*(CDMi(u_old,i,j,k)) + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(2+alpha*dt);    
+    u_new[n] = (u_old[n] + dt*lambda/(lambda+sigma)*(2*CDMi(u_old,i,j,k) 
+             + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(1+alpha*dt*lambda/(lambda+sigma));    
   } 
   // PDMS and Zero Flux Boundaries
   else if (k<INTERFACE&&k>0)
