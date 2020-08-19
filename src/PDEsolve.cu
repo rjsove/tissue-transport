@@ -68,7 +68,7 @@ __device__ void imex(float* u_old,float* u_new,float BC,int i,int j,int k)
   //#endif
   else // Tissue and Zero Flux Boundaries
   {
-    u_new[n] = 4.0f;//(u_old[n] + dt*(CDM(u_old,i,j,k) + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(1+alpha*dt);
+    u_new[n] = (u_old[n] + dt*(CDM(u_old,i,j,k) + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(1+alpha*dt);
   }
 }
 
