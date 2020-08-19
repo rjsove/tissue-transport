@@ -91,7 +91,7 @@ void print(float* u,int Nx,int Ny,int Nz,int dim,int slc,std::string filename)
     {
       for (int k = (dim==2 ? slc:0); k < (dim==2 ? slc+1:Nz); k++)
       {
-        file << 1.0f << " "; //u[i+Nx*(j+Ny*k)] << " "; 
+        file << u[i+Nx*(j+Ny*k)] << " "; 
       }
       if (dim==0)
         file << "\n";
