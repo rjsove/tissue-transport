@@ -63,7 +63,7 @@ __device__ void imex(float* u_old,float* u_new,float BC,int i,int j,int k)
   // PDMS and Zero Flux Boundaries
   else if (k<INTERFACE&&k>0)
   {
-    u_new[n] = 3.0f;//(u_old[n] + dt*(lambda*CDM(u_old,i,j,k)))/(1+alpha*dt);
+    u_new[n] = (u_old[n] + dt*(lambda*CDM(u_old,i,j,k)))/(1+alpha*dt);
   } 
   //#endif
   else // Tissue and Zero Flux Boundaries
