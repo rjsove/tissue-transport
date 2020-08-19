@@ -49,9 +49,9 @@ int main(int argc,char** argv)
   //print_time.schedule(30.0f,30.0f);  
   
   // Initialize Computational Domain (user input)
-  int Nx = 144; // 576, 288, 144
-  int Ny = 144; // 576, 288, 144
-  int Nz = 48; // 192, 96, 48 
+  int Nx = 5; // 576, 288, 144
+  int Ny = 5; // 576, 288, 144
+  int Nz = 3; // 192, 96, 48 
   float dt = 1e-6; // was 1e-6
   
   // Calculate Dimensionless Parameters
@@ -96,8 +96,8 @@ int main(int argc,char** argv)
   float* u_h = new float[N]();
   constIC(u_h,1.0f,N);
   //varIC(u_h,"data/baseline_steady-state1.csv",N);
-  print(u_h,N,dir+filename+"_full0.csv");
-  print(u_h,Nx,Ny,Nz,dim,slc,dir+filename+"0.csv");
+  print(u_h,Nx,Ny,Nz,dim,3,dir+filename+"0.csv");
+  
   
   // Allocate Memory on Device 
   float *uold_d,*unew_d;
