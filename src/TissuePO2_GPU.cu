@@ -13,12 +13,6 @@ int main(int argc,char** argv)
   float Pbsl = 38.0f; // Baseline PO2 <mmHg>
   float Phigh = 53.2f; // High PO2 <mmHg>
   float Plow = 15.2f; // Low PO2 <mmHg>
-  
-  // Output Filename (user input)
-  string dir = "out/PO2/";
-  string filename = "test";
-  int dim = 1;
-  int slc = 288;
    
   // Initialize Physical Constants (user input)
   float D = 2.41e-5f; // diffusivity <cm^2/s>
@@ -49,10 +43,16 @@ int main(int argc,char** argv)
   //print_time.schedule(30.0f,30.0f);  
   
   // Initialize Computational Domain (user input)
-  int Nx = 5; // 576, 288, 144
-  int Ny = 5; // 576, 288, 144
-  int Nz = 3; // 192, 96, 48 
+  int Nx = 144; // 576, 288, 144
+  int Ny = 144; // 576, 288, 144
+  int Nz = 48; // 192, 96, 48 
   float dt = 1e-6; // was 1e-6
+  
+  // Output Filename (user input)
+  string dir = "out/PO2/";
+  string filename = "test";
+  int dim = 1;
+  int slc = Ny/2-1;
   
   // Calculate Dimensionless Parameters
   float tau = L*L/D;
@@ -96,7 +96,7 @@ int main(int argc,char** argv)
   float* u_h = new float[N]();
   constIC(u_h,1.0f,N);
   //varIC(u_h,"data/baseline_steady-state1.csv",N);
-  print(u_h,Nx,Ny,Nz,dim,3,dir+filename+"0.csv");
+  print(u_h,Nx,Ny,Nz,dim,slc,dir+filename+"0.csv");
   
   
   // Allocate Memory on Device 
