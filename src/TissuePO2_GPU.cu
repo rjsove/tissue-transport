@@ -94,8 +94,9 @@ int main(int argc,char** argv)
   
   // Allocate Memory on Host
   float* u_h = new float[N]();
-  constIC(u_h,1.0f,Nx,Ny,Nz);
+  constIC(u_h,1.0f,N);
   //varIC(u_h,"data/baseline_steady-state1.csv",N);
+  print(u_h,N,dir+filename+"_full0.csv");
   print(u_h,Nx,Ny,Nz,dim,slc,dir+filename+"0.csv");
   
   // Allocate Memory on Device 

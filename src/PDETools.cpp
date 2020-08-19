@@ -23,17 +23,11 @@ void stepIC(float* u,int Nx,int Ny,int Nz)
 }
 
 // Constant Value of u0 
-void constIC(float* u,float u0,int Nx,int Ny,int Nz)
+void constIC(float* u,float u0,int N)
 {
-  for (int i = 0; i < Nx; i++)
-  {
-    for (int j = 0; j < Ny; j++)
-    {
-      for (int k = 0; k < Nz; k++)
-      {
-        u[i+Nx*(j+k*Ny)] = u0;
-      }
-    }
+  for (int i = 0; i < N; i++)
+  {    
+    u[i] = u0;
   }
 }
 

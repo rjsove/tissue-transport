@@ -4,7 +4,7 @@
 #include <fstream>
 
 void stepIC(float* u,int Nx,int Ny,int Nz);
-void constIC(float* u,float u0,int Nx,int Ny,int Nz);
+void constIC(float* u,float u0,int N);
 void varIC(float* u,std::string filename,int N);
 float squareWave(float t,float T,float ubsl,float uhigh,float ulow);
 void print(float* u,int N,std::string filename);
