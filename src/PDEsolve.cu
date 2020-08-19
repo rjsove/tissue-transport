@@ -80,6 +80,7 @@ __global__ void step(float* u_old,float* u_new,float BC,model mdl,grid grd,geome
   beta = mdl.gamma; km = mdl.km;
   gam = mdl.gamma; lambda = mdl.lambda;
   sigma = mdl.sigma;
+  dt  = grd.dt;
   Nx = grd.Nx; dx = grd.dx;
   Ny = grd.Ny; dy = grd.dy;
   Nz = grd.Nz; dz = grd.dz;
