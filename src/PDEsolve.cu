@@ -5,7 +5,7 @@
 
 // Comment out if not using PDMS layer
 #define PDMS
-#define INTERFACE 6 // make sure this corresponds to number of node in PDMS layer
+#define INTERFACE 5 // make sure this corresponds to number of node in PDMS layer
 
 // Solves PDE du/ds = lapl(u) + alpha*(ub-u) - beta*u/(km+u)
 
@@ -44,15 +44,11 @@ __device__ void imex(float* u_old,float* u_new,float BC,int i,int j,int k)
   // Apply Boundary Conditions
   int n = at(i,j,k);
   // Fixed Value BC at Window 
-  if (k==0)
+  if (WINDOWBC)
   {
-    u_new[n] = 1.0f;
+    u_new[n] = BC;
   }
-  //if (WINDOWBC)
-  //{
-  //  u_new[n] = BC;
-  //}
-  //#ifdef PDMS 
+  #ifdef PDMS 
   // Interface B.C.
   else if (k==INTERFACE)
   {
@@ -64,7 +60,7 @@ __device__ void imex(float* u_old,float* u_new,float BC,int i,int j,int k)
   {
     u_new[n] = (u_old[n] + dt*(lambda*CDM(u_old,i,j,k)))/(1+alpha*dt);
   } 
-  //#endif
+  #endif
   else // Tissue and Zero Flux Boundaries
   {
     u_new[n] = (u_old[n] + dt*(CDM(u_old,i,j,k) + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(1+alpha*dt);

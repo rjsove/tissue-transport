@@ -5,10 +5,14 @@
 #include "PDETools.h"
 #include "PDEsolve.h"
 #include "configuration.h"
+#include "timer.h"
 using namespace std;
 
 int main(int argc,char** argv)
 {
+  // Start Main Timer 
+  timer timer1("Total");
+  
   // Square Wave Parameters
   float Pbsl = 38.0f; // Baseline PO2 <mmHg>
   float Phigh = 53.2f; // High PO2 <mmHg>
@@ -43,23 +47,27 @@ int main(int argc,char** argv)
   //print_time.schedule(30.0f,30.0f);  
   
   // Initialize Computational Domain (user input)
-  int Nx = 144; // 576, 288, 144
-  int Ny = 144; // 576, 288, 144
-  int Nz = 48; // 192, 96, 48 
+  int Nx = 288; // 576, 288, 144
+  int Ny = 288; // 576, 288, 144
+  int Nz = 96; // 192, 96, 48 
   float dt = 1e-6; // was 1e-6
   
   // Output Filename (user input)
   string dir = "out/PO2/";
   string filename = "test";
-  int dim = 1;
-  int slc = Ny/2-1;
+  int dim0 = 1;
+  int slc0 = Ny/2-1;
+  int dim1 = 2;
+  int slc1 = 17;
+  int dim2 = 2;
+  int slc2 = 22;
   
   // Calculate Dimensionless Parameters
   float tau = L*L/D;
-  float alpha = 0.0f;//K/P0*tau;
+  float alpha = K/P0*tau;
   float ub = 1;
   float beta = VO2/(P0*k)*tau; 
-  float km = 1e-9;//Pcrit/P0;
+  float km = Pcrit/P0;
   float lambda = Dpdms/D;
   float sigma = lambda*kpdms/k;
   float ay = H/L;
@@ -96,8 +104,7 @@ int main(int argc,char** argv)
   float* u_h = new float[N]();
   constIC(u_h,1.0f,N);
   //varIC(u_h,"data/baseline_steady-state1.csv",N);
-  print(u_h,Nx,Ny,Nz,dim,slc,dir+filename+"0.csv");
-  
+  print(u_h,Nx,Ny,Nz,dim0,slc0,dir+filename+"0.csv");
   
   // Allocate Memory on Device 
   float *uold_d,*unew_d;
@@ -127,9 +134,12 @@ int main(int argc,char** argv)
     // Print Solution
     if (print_time(t*tau))
     {
+      timer timer2("Write Out");
       cout << "Writing t = " << t << "...\n";
       cudaMemcpy(u_h,unew_d,size,cudaMemcpyDeviceToHost);
-      print(u_h,Nx,Ny,Nz,dim,slc,dir+filename+to_string(np)+".csv");
+      print(u_h,Nx,Ny,Nz,dim0,slc0,dir+filename+"_1_"+to_string(np)+".csv");
+      print(u_h,Nx,Ny,Nz,dim1,slc1,dir+filename+"_2_"+to_string(np)+".csv");
+      print(u_h,Nx,Ny,Nz,dim2,slc2,dir+filename+"_3_"+to_string(np)+".csv");
       write_time(t*tau);
       np++;
     }
