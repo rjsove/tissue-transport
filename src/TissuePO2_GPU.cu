@@ -54,7 +54,7 @@ int main(int argc,char** argv)
   
   // Output Filename (user input)
   string dir = "out/PO2/";
-  string filename = "test";
+  string filename = "steady-state";
   int dim0 = 1;
   int slc0 = Ny/2-1;
   int dim1 = 2;
@@ -104,7 +104,7 @@ int main(int argc,char** argv)
   float* u_h = new float[N]();
   constIC(u_h,1.0f,N);
   //varIC(u_h,"data/baseline_steady-state1.csv",N);
-  print(u_h,Nx,Ny,Nz,dim0,slc0,dir+filename+"0.csv");
+  //print(u_h,Nx,Ny,Nz,dim0,slc0,dir+filename+"0.csv");
   
   // Allocate Memory on Device 
   float *uold_d,*unew_d;
@@ -125,7 +125,7 @@ int main(int argc,char** argv)
   { 
     // Boundary Condition
     //uwin = squareWave(t,T,Pbsl/P0,Phigh/P0,Plow/P0); // square wave in time
-    uwin = Plow/P0; // constant in time
+    uwin = Pbsl/P0; // constant in time
    
     // Call GPU Kernel
     step<<<dimGrid,dimBlock>>>(uold_d,unew_d,uwin,mdl,grd,geo);
@@ -137,9 +137,10 @@ int main(int argc,char** argv)
       timer timer2("Write Out");
       cout << "Writing t = " << t << "...\n";
       cudaMemcpy(u_h,unew_d,size,cudaMemcpyDeviceToHost);
-      print(u_h,Nx,Ny,Nz,dim0,slc0,dir+filename+"_1_"+to_string(np)+".csv");
-      print(u_h,Nx,Ny,Nz,dim1,slc1,dir+filename+"_2_"+to_string(np)+".csv");
-      print(u_h,Nx,Ny,Nz,dim2,slc2,dir+filename+"_3_"+to_string(np)+".csv");
+      //print(u_h,Nx,Ny,Nz,dim0,slc0,dir+filename+"_1_"+to_string(np)+".csv");
+      //print(u_h,Nx,Ny,Nz,dim1,slc1,dir+filename+"_2_"+to_string(np)+".csv");
+      //print(u_h,Nx,Ny,Nz,dim2,slc2,dir+filename+"_3_"+to_string(np)+".csv");
+      print(u_h,N,dir+filename+".csv");
       write_time(t*tau);
       np++;
     }
