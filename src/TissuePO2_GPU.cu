@@ -35,10 +35,10 @@ int main(int argc,char** argv)
   //float th = 0.004; // PDMS layer thickness <cm>
   
   // Simulation Time (user input)
-  float sim_time = 750.0f; // simulation time <s> was 360.0f
+  float sim_time = 10.0f; // simulation time <s> was 360.0f
   if (argc == 2)
     sim_time = atof(argv[1]);
-  float print_frequency = 750.0f; // print frequency <s> was 0.25f
+  float print_frequency = 0.1f; // print frequency <s> was 0.25f
   
   // Write-Out Schedule
   // 0-10s: 1s, 10-30s: 5s, 30-180s: 30s
@@ -54,13 +54,16 @@ int main(int argc,char** argv)
   
   // Output Filename (user input)
   string dir = "out/PO2/";
-  string filename = "steady-state";
+  string filename = "step";
+  // Center Slice
   int dim0 = 1;
   int slc0 = Ny/2-1;
+  // z-plane Slices
   int dim1 = 2;
-  int slc1 = 17;
-  int dim2 = 2;
-  int slc2 = 22;
+  int slc1 = 5; // 25 um
+  int slc2 = 9; // 50 um
+  int slc3 = 13; // 75 um
+  int slc4 = 17; // 100 um
   
   // Calculate Dimensionless Parameters
   float tau = L*L/D;
@@ -102,9 +105,13 @@ int main(int argc,char** argv)
   
   // Allocate Memory on Host
   float* u_h = new float[N]();
-  constIC(u_h,1.0f,N);
-  //varIC(u_h,"data/baseline_steady-state1.csv",N);
-  //print(u_h,Nx,Ny,Nz,dim0,slc0,dir+filename+"0.csv");
+  //constIC(u_h,1.0f,N);
+  varIC(u_h,"out/PO2/steady-state.csv",N);
+  print(u_h,Nx,Ny,Nz,dim0,slc0,dir+filename+"_yPlane0.csv");
+  print(u_h,Nx,Ny,Nz,dim1,slc1,dir+filename+"_zPlane025um0.csv");
+  print(u_h,Nx,Ny,Nz,dim1,slc2,dir+filename+"_zPlane050um0.csv");
+  print(u_h,Nx,Ny,Nz,dim1,slc3,dir+filename+"_zPlane075um0.csv");
+  print(u_h,Nx,Ny,Nz,dim1,slc4,dir+filename+"_zPlane100um0.csv");
   
   // Allocate Memory on Device 
   float *uold_d,*unew_d;
@@ -119,13 +126,13 @@ int main(int argc,char** argv)
   dim3 dimBlock(BLOCK_SIZE_X,BLOCK_SIZE_Y,BLOCK_SIZE_Z);
 
   // Time Iteration
-  float t = 0.0f; int np = 1; time_writer write_time(dir+"t.csv"); write_time(t*tau);
+  float t = 0.0f; int np = 1; time_writer write_time(dir+"t_step.csv"); write_time(t*tau);
   float uwin;
   for (int nt = 1; t < T; nt++)
   { 
     // Boundary Condition
     //uwin = squareWave(t,T,Pbsl/P0,Phigh/P0,Plow/P0); // square wave in time
-    uwin = Pbsl/P0; // constant in time
+    uwin = Plow/P0; // constant in time
    
     // Call GPU Kernel
     step<<<dimGrid,dimBlock>>>(uold_d,unew_d,uwin,mdl,grd,geo);
@@ -137,10 +144,11 @@ int main(int argc,char** argv)
       timer timer2("Write Out");
       cout << "Writing t = " << t << "...\n";
       cudaMemcpy(u_h,unew_d,size,cudaMemcpyDeviceToHost);
-      //print(u_h,Nx,Ny,Nz,dim0,slc0,dir+filename+"_1_"+to_string(np)+".csv");
-      //print(u_h,Nx,Ny,Nz,dim1,slc1,dir+filename+"_2_"+to_string(np)+".csv");
-      //print(u_h,Nx,Ny,Nz,dim2,slc2,dir+filename+"_3_"+to_string(np)+".csv");
-      print(u_h,N,dir+filename+".csv");
+      print(u_h,Nx,Ny,Nz,dim0,slc0,dir+filename+"_yPlane"+to_string(np)+".csv");
+      print(u_h,Nx,Ny,Nz,dim1,slc1,dir+filename+"_zPlane025um"+to_string(np)+".csv");
+      print(u_h,Nx,Ny,Nz,dim1,slc2,dir+filename+"_zPlane050um"+to_string(np)+".csv");
+      print(u_h,Nx,Ny,Nz,dim1,slc3,dir+filename+"_zPlane075um"+to_string(np)+".csv");
+      print(u_h,Nx,Ny,Nz,dim1,slc4,dir+filename+"_zPlane100um"+to_string(np)+".csv");
       write_time(t*tau);
       np++;
     }
