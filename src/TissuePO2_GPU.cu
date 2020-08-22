@@ -35,10 +35,10 @@ int main(int argc,char** argv)
   //float th = 0.004; // PDMS layer thickness <cm>
   
   // Simulation Time (user input)
-  float sim_time = 10.0f; // simulation time <s> was 360.0f
+  float sim_time = 360.0f; // simulation time <s> was 360.0f
   if (argc == 2)
     sim_time = atof(argv[1]);
-  float print_frequency = 0.1f; // print frequency <s> was 0.25f
+  float print_frequency = 2.0f; // print frequency <s> was 0.25f
   
   // Write-Out Schedule
   // 0-10s: 1s, 10-30s: 5s, 30-180s: 30s
@@ -54,7 +54,7 @@ int main(int argc,char** argv)
   
   // Output Filename (user input)
   string dir = "out/PO2/";
-  string filename = "step";
+  string filename = "square-wave";
   // Center Slice
   int dim0 = 1;
   int slc0 = Ny/2-1;
@@ -126,7 +126,7 @@ int main(int argc,char** argv)
   dim3 dimBlock(BLOCK_SIZE_X,BLOCK_SIZE_Y,BLOCK_SIZE_Z);
 
   // Time Iteration
-  float t = 0.0f; int np = 1; time_writer write_time(dir+"t_step.csv"); write_time(t*tau);
+  float t = 0.0f; int np = 1; time_writer write_time(dir+"t_square-wave.csv"); write_time(t*tau);
   float uwin;
   for (int nt = 1; t < T; nt++)
   { 

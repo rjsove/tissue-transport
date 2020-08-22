@@ -1,6 +1,3 @@
-/bin
-/old
-out/ATP
-out/Ach
-out/PE
-out/data
+bin/
+old/
+out/
