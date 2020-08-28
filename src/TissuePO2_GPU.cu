@@ -14,15 +14,15 @@ int main(int argc,char** argv)
   timer timer1("Total");
   
   // Square Wave Parameters
-  float Pbsl = 38.0f; // Baseline PO2 <mmHg> 5%
-  float Phigh = 53.2f; // High PO2 <mmHg> 7% [12% -> 91.2 mmHg]
+  float Pbsl = 53.2.0f; // Baseline PO2 <mmHg> 7%
+  float Phigh = 91.2f; // High PO2 <mmHg> 12% 
   float Plow = 15.2f; // Low PO2 <mmHg> 2%
    
   // Initialize Physical Constants (user input)
   float D = 2.41e-5f; // diffusivity <cm^2/s>
   float k = 3.89e-5f; // solubility <mLO2/mL/mmHg>
-  float Dpdms = 3.55e-5f; // diffusivity <cm^2/s>
-  float kpdms = 1.32e-5f; // solubility <mLO2/mL/mmHg>
+  float Dpdms = 3.40e-5f; // diffusivity <cm^2/s> [Merkel 2000]
+  float kpdms = 2.37e-4f; // solubility <mLO2/mL/mmHg> [Merkel 2000]
   float VO2 = 1.50e-4f; // O2 consumption <mLO2/mL/s>
   float Pcrit = 0.5f; // critical PO2 <mmHg>
   float P0 = 48.0f; // capillary PO2 <mmHg>
