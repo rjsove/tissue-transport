@@ -14,9 +14,9 @@ int main(int argc,char** argv)
   timer timer1("Total");
   
   // Square Wave Parameters
-  float Pbsl = 38.0f; // Baseline PO2 <mmHg>
-  float Phigh = 53.2f; // High PO2 <mmHg>
-  float Plow = 15.2f; // Low PO2 <mmHg>
+  float Pbsl = 38.0f; // Baseline PO2 <mmHg> 5%
+  float Phigh = 53.2f; // High PO2 <mmHg> 7% [12% -> 91.2 mmHg]
+  float Plow = 15.2f; // Low PO2 <mmHg> 2%
    
   // Initialize Physical Constants (user input)
   float D = 2.41e-5f; // diffusivity <cm^2/s>
