@@ -1,7 +1,7 @@
 #include "PDEsolve.h"
 
-#define WINDOWBC windowBC(i,j,k)
-//#define WINDOWBC fiveWindowsBC(i,j,k)
+//#define WINDOWBC windowBC(i,j,k)
+#define WINDOWBC fiveWindowsBC(i,j,k) // need to change domain dimensions and geometry for window spacing
 
 // Comment out if not using PDMS layer
 #define PDMS
@@ -81,6 +81,7 @@ __global__ void step(float* u_old,float* u_new,float BC,model mdl,grid grd,geome
   Nz = grd.Nz; dz = grd.dz;
   L = geo.L; l = geo.l;
   H = geo.H; h = geo.h;
+  xs = geo.xs; ys = geo.ys;
   
   // Determine Position within array
   int ATOM_SIZE_X = Nx/(blockDim.x*gridDim.x);
@@ -126,39 +127,35 @@ __global__ void step(float* u_old,float* u_new,float BC,model mdl,grid grd,geome
 __device__ bool windowBC(int i,int j,int k)
 {   
   // Relative Window Dimensions 
-  float l_ = l/L,h_ = h/H;
+  float l_ = l/L,h_ = h/L;
+  float a = H/L;
    
-  return abs(2*i*dx-1)<=l_ & abs(2*j*dy-1)<= h_ & k==0;
+  return abs(2*i*dx-1)<=l_ & abs(2*j*dy-a)<= h_ & k==0;
 }
 // Five Windows Boundary Condition
 __device__ bool fiveWindowsBC(int i,int j,int k)
 {
   // Domain Dimensions (cm)
-  // *must be consistant with simulation
   // float W = 0.52f,H = 0.44f; 
-
   // Window Dimensions (cm)
   // float w = 0.04f,h = 0.02f; 
-  
   // Window Spacing (cm)
   // float xs = 0.1f,ys = 0.2f;
   
   // Relative Window Dimensions 
-  float l_ = l/L,h_ = h/H;
-  float xs_ = xs/L,ys_ = ys/H;
+  float l_ = l/L,h_ = h/L; 
+  float xs_ = xs/L,ys_ = ys/L; 
+  float a = H/L; 
   
   // Windows
-  float x0,y0;
-  x0 = (1+l_+xs_)/2; y0 = (1+h_+ys_)/2;
-  bool window1 = abs(2*(i*dx-x0))<=l_ & abs(2*(j*dy-y0))<=h_ & k==0; 
-  x0 = (1-l_-xs_)/2; y0 = (1+h_+ys_)/2;
-  bool window2 = abs(2*(i*dx-x0))<=l_ & abs(2*(j*dy-y0))<=h_ & k==0; 
-  x0 = 0.5-l_-xs_; y0 = (1-h_-ys_)/2;
-  bool window3 = abs(2*(i*dx-x0))<=l_ & abs(2*(j*dy-y0))<=h_ & k==0; 
-  x0 = 0.5; y0 = (1-h_-ys_)/2;
-  bool window4 = abs(2*(i*dx-x0))<=l_ & abs(2*(j*dy-y0))<=h_ & k==0; 
-  x0 = 0.5+l_+xs_; y0 = (1-h_-ys_)/2;
-  bool window5 = abs(2*(i*dx-x0))<=l_ & abs(2*(j*dy-y0))<=h_ & k==0; 
+  float x0[] = {(1+l_+xs_)/2,(1-l_-xs_)/2,0.5f-l_-xs_,0.5f,0.5f+l_+xs_}; 
+  float y0[] = {(a+h_+ys_)/2,(a+h_+ys_)/2,(a-h_-ys_)/2,(a-h_-ys_)/2,(a-h_-ys_)/2}; 
   
-  return window1 | window2 | window3 | window4 | window5;
+  bool window = false;
+  for (int win = 0; win < 5; win++)
+  {
+    window = window | abs(2*(i*dx-x0[win]))<=l_ & abs(2*(j*dy-y0[win]))<=h_ & k==0; 
+  }
+  
+  return window;
 }
