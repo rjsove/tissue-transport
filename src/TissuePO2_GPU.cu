@@ -28,7 +28,7 @@ float k = 3.89e-5f; // solubility <mLO2/mL/mmHg>
 float Dpdms = 3.40e-5f; // diffusivity <cm^2/s> [Merkel 2000]
 float kpdms = 2.37e-4f; // solubility <mLO2/mL/mmHg> [Merkel 2000]
 float M0 = 1.50e-4f; // O2 consumption <mLO2/mL/s>
-float Pcrit = 0.5f; // critical PO2 <mmHg>
+float Km = 0.5f; // critical PO2 <mmHg>
 float Pc = 48.0f; // capillary PO2 <mmHg>
 float K = 30.0f; // capillary source <mmHg/s>
 
@@ -72,60 +72,61 @@ int slc2 = 13; // 75 um
 int slc3 = 17; // 100 um
 */
 
-int main(int argc,char** argv)
+int main()
 {
   // Start Main Timer 
   timer timer1("Total");
   
   // Read User Inputs
-  ttgpu::inStream consts = ttgpu::read(ttgpu::PHYSICS)
-  ttgpu::inStream geom   = ttgpu::read(ttgpu::GEOMETRY)
-  ttgpu::inStream ivbp   = ttgpu::read(ttgpu::BOUNDARY_CONDITIONS)
-  ttgpu::inStream discr  = ttgpu::read(ttgpu::DISCRETIZATION)
-  ttgpu::inStream outset = ttgpu::read(ttgpu::OUTPUT_SETTINGS)
+  ttgpu::istream io;
    
   // Physical Constants 
-  float D     = consts.D;     // diffusivity <cm^2/s>
-  float k     = consts.k;     // solubility <mLO2/mL/mmHg>
-  float Dpdms = consts.Dpdms; // diffusivity <cm^2/s> [Merkel 2000]
-  float kpdms = consts.kpdms; // solubility <mLO2/mL/mmHg> [Merkel 2000]
-  float M0    = consts.M0;    // O2 consumption <mLO2/mL/s>
-  float Pcrit = consts.Pcrit; // critical PO2 <mmHg>
-  float Pc    = consts.Pc;    // capillary PO2 <mmHg>
-  float K     = consts.K;     // capillary source <mmHg/s>
+  float D     = io.physics.D;     // diffusivity <cm^2/s>
+  float k     = io.physics.k;     // solubility <mLO2/mL/mmHg>
+  float Dpdms = io.physics.Dpdms; // diffusivity <cm^2/s> [Merkel 2000]
+  float kpdms = io.physics.kpdms; // solubility <mLO2/mL/mmHg> [Merkel 2000]
+  float M0    = io.physics.M0;    // O2 consumption <mLO2/mL/s>
+  float Km    = io.physics.Km;    // critical PO2 <mmHg>
+  float Pc    = io.physics.Pc;    // capillary PO2 <mmHg>
+  float K     = io.physics.K;     // capillary source <mmHg/s>
   
   // Geometry 
   // regular simulation:     [LxW]=[0.20x0.20]
   // five window simulation: [LxW]=[0.52x0.44]
-  float L  = geom.L;  // tissue length <cm> 
-  float H  = geom.H;  // tissue height <cm> 
-  float W  = geom.W;  // tissue depth <cm>
-  float l  = geom.l;  // window length <cm>
-  float h  = geom.h;  // window height <cm>
-  float xs = geom.xs; // horizontal window spacing <cm>
-  float ys = geom.ys; // vertical window spacing <cm>
-  float th = geom.th; // PDMS layer thickness <cm>
+  float L  = io.geometry.L;  // tissue length <cm> 
+  float H  = io.geometry.H;  // tissue height <cm> 
+  float W  = io.geometry.W;  // tissue depth <cm>
+  float l  = io.geometry.l;  // window length <cm>
+  float h  = io.geometry.h;  // window height <cm>
+  float xs = io.geometry.xs; // horizontal window spacing <cm>
+  float ys = io.geometry.ys; // vertical window spacing <cm>
+  float th = io.geometry.th; // PDMS layer thickness <cm>
   
   // Boundary Condition Parameters 
-  float Pbsl = ibvp.bcValue; // Baseline Window PO2 <mmHg>
-  if (!ibvp.constantBC)
+  float Pbsl = io.ibvp.bcValue; // Baseline Window PO2 <mmHg>
+  float Plow,Phigh;
+  if (!io.ibvp.constantBC)
   {
-    float Plow  = ibvp.bcSqWvLowValue;  // Low PO2 <mmHg> 
-    float Phigh = ibvp.bcSqWvHighValue; // High PO2 <mmHg> 
+    Plow  = io.ibvp.bcSqWvLowValue;  // Low PO2 <mmHg> 
+    Phigh = io.ibvp.bcSqWvHighValue; // High PO2 <mmHg> 
   }
   
   // Computational Domain
-  int   Nx = discr.Nx;
-  int   Ny = discr.Ny;
-  int   Nz = discr.Nz; 
-  float dt = discr.dt;
+  int   Nx = io.discretization.Nx;
+  int   Ny = io.discretization.Ny;
+  int   Nz = io.discretization.Nz; 
+  float dt = io.discretization.dt;
   
   // Simulation Time 
-  float sim_time        = ouset.sim_time;        // simulation time <s> 
-  float write_interval  = outset.write_interval; // print interval <s> 
+  float sim_time        = io.output.sim_time;        // simulation time <s> 
+  float write_interval  = io.output.write_interval; // print interval <s> 
   
-  // Output Filename 
-  string outputFilename = outset.filename;
+  // Project Name  
+  std::string name = io.output.name;
+  
+  // Output Files 
+  std::string outdir = "/out/";
+  std::string ext = ".csv";
   
   // Write-Out Schedule
   print_scheduler print_time(write_interval);
@@ -135,22 +136,22 @@ int main(int argc,char** argv)
   float alpha = K/Pc*tau;
   float ub = 1;
   float beta = M0/(Pc*k)*tau; 
-  float km = Pcrit/Pc;
+  float km = Km/Pc;
   float lambda = Dpdms/D;
   float sigma = lambda*kpdms/k;
   float ay = H/L;
   float az = W/L;
   
   // Calculate Computational Parameters
-  model mdl(alpha,beta,1.0f,ub,km,lambda,sigma);
-  grid grd(Nx,Ny,Nz,dx,dy,dz,dt);
-  geometry geo(L,H,W,l,h,xs,ys);
-  int numNodes = Nx*Ny*Nz;
-  size_t size = numNodes*sizeof(float);
   float dx = 1.0f/(Nx-1.0f);
   float dy = ay/(Ny-1.0f);
   float dz = az/(Nz-1.0f);
   float endTime = sim_time/tau;
+  model mdl(alpha,beta,1.0f,ub,km,lambda,sigma);
+  grid grd(Nx,Ny,Nz,dx,dy,dz,dt);
+  geometry geo(L,H,W,l,h,xs,ys,th);
+  int numNodes = Nx*Ny*Nz;
+  size_t size = numNodes*sizeof(float);
   
   // Print Simulation Info
   float ds = min(min(dx,dy),dz); 
@@ -162,7 +163,7 @@ int main(int argc,char** argv)
   std::cout << "Length Scale: " << L << " cm\n";
   std::cout << "Time Scale: " << tau << " s\n";
   std::cout << "O2 Scale: " << Pc << " mmHg\n\n";
-  if (ibvp.constantBC)
+  if (io.ibvp.constantBC)
     std::cout << "Window O2: " << Pbsl/760 << "%\n\n";
   else
   {
@@ -171,14 +172,14 @@ int main(int argc,char** argv)
     std::cout << "Baseline: " << Pbsl/760  << "%\n";
     std::cout << "High O2: "  << Phigh/760 << "%\n\n";
   }
-  std::cout << "PDMS Layer Thickness: " << round(geom.th/dz)*dz*1e4 << " um\n\n";
+  std::cout << "PDMS Layer Thickness: " << round(io.geometry.th/dz)*dz*1e4 << " um\n\n";
   
   // Allocate Memory on Host
   float* u_h = new float[numNodes];
-  if (ibvp.homogeneousIC)
-    constIC(u_h,ibvp.icValue,numNodes);
+  if (io.ibvp.homogeneousIC)
+    constIC(u_h,io.ibvp.icValue,numNodes);
   else
-    varIC(u_h,ibvp.icFilename,numNodes);
+    varIC(u_h,io.ibvp.icFilename,numNodes);
   
   // Allocate Memory on Device 
   float *uold_d,*unew_d;
@@ -194,12 +195,12 @@ int main(int argc,char** argv)
 
   // Time Iteration
   float t = 0.0f; int np = 1; 
-  time_writer write_time(dir+"t.csv"); write_time(t*tau);
+  time_writer write_time(outdir+"t.csv"); write_time(t*tau);
   float uwin;
   for (int nt = 1; t < endTime; nt++)
   { 
     // Boundary Condition
-    if (ibvp.constantBC)
+    if (io.ibvp.constantBC)
       uwin = Pbsl/Pc;
     else
       uwin = squareWave(t,endTime,Pbsl/Pc,Phigh/Pc,Plow/Pc); 
@@ -219,11 +220,13 @@ int main(int argc,char** argv)
       cudaMemcpy(u_h,unew_d,size,cudaMemcpyDeviceToHost);
       
       // Call Prints
-      if (outset.writeFullSolution)
-        print(u_h,size,filname+"csv");
-      for (int slice = 0; slice < outset.numberOfSlices; slice++)
+      std::string filename = outdir+name+ext;
+      if (io.output.writeFullSolution)
+        print(u_h,size,filename);
+      for (int slice = 0; slice < io.output.numberOfSlices; slice++)
       {
-        print(u_h,Nx,Ny,Nz,ouset.sliceDim[slice],outset.slice[slice],filename+outset.fileSuffix[slice]);
+        filename = outdir+name+io.output.fileSuffix[slice]+ext;
+        print(u_h,Nx,Ny,Nz,io.output.sliceDim[slice],io.output.slice[slice],filename);
       }
       write_time(t*tau);
       

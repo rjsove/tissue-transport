@@ -4,8 +4,6 @@
 #include <cmath>
 #include <iostream>
 
-using namespace std;
-
 // Initial Conditions
 // Cube centered in domain with side length of 1/4 set to 1
 void stepIC(float* u,int Nx,int Ny,int Nz)
@@ -34,7 +32,7 @@ void constIC(float* u,float u0,int size)
 // Variable I.C. set from file
 void varIC(float* u,std::string filename,int size)
 {
-  ifstream file;
+  std::ifstream file;
   file.open(filename);
   int i = 0;
   for (int i = 0; i < size; i++)
@@ -51,12 +49,12 @@ float squareWave(float t,float endTime,float ubsl,float uhigh,float ulow)
   float u;
   
   // Baseline
-  if (t < endTime/6 || t >= 5*T/6)
+  if (t < endTime/6 || t >= 5*endTime/6)
   {
     u = ubsl;
   }
   // High O2
-  else if (t < enTime/2)
+  else if (t < endTime/2)
   {
     u = uhigh;
   }
@@ -70,20 +68,20 @@ float squareWave(float t,float endTime,float ubsl,float uhigh,float ulow)
 }
 
 // I/O
-void print(float* u,int size,string filename)
+void print(float* u,int size,std::string filename)
 {
-  ofstream file;
+  std::ofstream file;
   file.open(filename);
   for (int i = 0; i < size; i++)
   {
-    file << u[i] << endl;
+    file << u[i] << std::endl;
   }
   file.close();
 }
 
 void print(float* u,int Nx,int Ny,int Nz,int dim,int slc,std::string filename)
 {
-  ofstream file;
+  std::ofstream file;
   file.open(filename);
   for (int i = (dim==0 ? slc:0); i < (dim==0 ? slc+1:Nx); i++) 
   {
@@ -145,7 +143,7 @@ void print_scheduler::schedule(float start_time,float print_frequency)
   count++;
 }
 
-time_writer::time_writer(string filename)
+time_writer::time_writer(std::string filename)
 {
   out.open(filename);
 }

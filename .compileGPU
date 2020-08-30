@@ -1,1 +1,1 @@
-nvcc --std=c++11 -arch=sm_30 src/timer.cpp src/PDETools.cpp src/PDEsolve.cu src/TissuePO2_GPU.cu -o bin/runGPU
+nvcc --std=c++11 src/timer.cpp src/IOTools.cpp src/PDETools.cpp src/PDEsolve.cu src/TissuePO2_GPU.cu -o bin/runGPU

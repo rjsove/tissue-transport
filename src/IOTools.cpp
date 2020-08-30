@@ -1,194 +1,95 @@
 #include "IOTools.h"
 #include <iostream>
-#include <string>
 #include <fstream>
+#include <sstream>
 
-void ttgpu::physics::readFile()
+void ttgpu::istream::setParameters(std::string line)
 {
-  // Initialize File Stream
-  ifstream file("physics.ttpgu");
+  std::string name;
+  size_t pos=0;
+  while ((pos = line.find('=', pos)) != std::string::npos)
+      line[pos] = ' ';
+  std::istringstream ss(line);
+  ss >> name;
   
-  // Read in Parameters
-  temp        << file;
-  this->D     << file;
-  temp        << file;
-  this->k     << file;
-  temp        << file;
-  this->Dpdms << file;
-  temp        << file;
-  this->kpdms << file;
-  temp        << file;
-  this->M0    << file;
-  temp        << file;
-  this->Km    << file;
-  temp        << file;
-  this->Pc    << file;
-  temp        << file;
-  this->K     << file;
+  // Store Value
+  // Physics
+  if (name.compare("D")==0){
+    ss >> this->physics.D; return;}
+  else if (name.compare("k")==0){
+    ss >> this->physics.k; return;}
+  else if (name.compare("Dpdsm")==0){
+    ss >> this->physics.Dpdms; return;}
+  else if (name.compare("kpdms")==0){
+    ss >> this->physics.kpdms; return;}
+  else if (name.compare("M0")==0){
+    ss >> this->physics.M0; return;}
+  else if (name.compare("Km")==0){
+    ss >> this->physics.Km; return;}
+  else if (name.compare("Pc")==0){
+    ss >> this->physics.Pc; return;}
+  else if (name.compare("K")==0){
+    ss >> this->physics.K; return;}
+  // Geometry 
+  else if (name.compare("L")==0){
+    ss >> this->geometry.L; return;}
+  else if (name.compare("H")==0){
+    ss >> this->geometry.H; return;}
+  else if (name.compare("W")==0){
+    ss >> this->geometry.W; return;}
+  else if (name.compare("l")==0){
+    ss >> this->geometry.l; return;}
+  else if (name.compare("h")==0){
+    ss >> this->geometry.h; return;}
+  else if (name.compare("xs")==0){
+    ss >> this->geometry.xs; return;}
+  else if (name.compare("ys")==0){
+    ss >> this->geometry.ys; return;}
+  else if (name.compare("th")==0){
+    ss >> this->geometry.th; return;}
+  // Boundary Conditions 
+  else if (name.compare("homogeneousIC")==0){
+    ss >> this->ibvp.homogeneousIC; return;}
+  else if (name.compare("constantBC")==0){
+    ss >> this->ibvp.constantBC; return;}
+  else if (name.compare("icFilename")==0){
+    ss >> this->ibvp.icFilename; return;}
+  else if (name.compare("icValue")==0){
+    ss >> this->ibvp.icValue; return;}
+  else if (name.compare("bcValue")==0){
+    ss >> this->ibvp.bcValue; return;}
+  else if (name.compare("bcSqWvHighValue")==0){
+    ss >> this->ibvp.bcSqWvHighValue; return;}
+  else if (name.compare("bcSqWvLowValue")==0){
+    ss >> this->ibvp.bcSqWvLowValue; return;}
+  // Discretization  
+  else if (name.compare("Nx")==0)
+    ss >> this->discretization.Nx;
+  else if (name.compare("Ny")==0)
+    ss >> this->discretization.Ny;
+  else if (name.compare("Nz")==0)
+    ss >> this->discretization.Nz;
+  else if (name.compare("dt")==0)
+    ss >> this->discretization.dt;  
+  // Output 
+       
+}
+
+void ttgpu::istream::read(std::string filename)
+{
+  std::string line;
+  std::ifstream file(filename);
+  while (getline(file,line))
+    setParameters(line);
   file.close();
 }
 
-void ttgpu::geometry::readFile()
+ttgpu::istream::istream()
 {
-  std::String temp;
-  
-  // Initialize File Stream
-  ifstream file("geometry.ttpgu");
-  
-  // Read in Parameters
-  temp        << file;
-  this->L     << file;
-  temp        << file;
-  this->H     << file;
-  temp        << file;
-  this->W     << file;
-  temp        << file;
-  this->l     << file;
-  temp        << file;
-  this->h     << file;
-  temp        << file;
-  this->xs    << file;
-  temp        << file;
-  this->ys    << file;
-  temp        << file;
-  this->th    << file;
-  file.close();
-}
-
-ttgpu::boundaryConditions::readFile()
-{
-  std::string temp,icTemp;
-  
-  // Initialize File Stream
-  ifstream file("physics.ttpgu");
-  temp          << file;
-  icTemp        << file;
-  temp          << file;
-  this->bcValue << file;
-  
-  // Check if bcValue is at eof 
-  if ()
-  {
-    this->bcSqWvLowValue  << file;
-    this->bcSqWvHighValue << file;  
-  }
-  
-  // Close File
-  file.close();
-  
-  // Check if icTemp is Filename or Value 
-  if ()
-  {
-    this->icValue = icTemp;
-  }
-  else
-  {
-    this->icFilename = icTemp;
-  }
-}
-
-ttgpu::discretization::readFile()
-{
-  ifstream file("physics.ttpgu");
-  temp        << file;
-  this->D     << file;
-  temp        << file;
-  this->k     << file;
-  temp        << file;
-  this->Dpdms << file;
-  temp        << file;
-  this->kpdms << file;
-  temp        << file;
-  this->M0    << file;
-  temp        << file;
-  this->Km    << file;
-  temp        << file;
-  this->Pc    << file;
-  temp        << file;
-  this->K     << file;
-  file.close();
-}
-
-ttgpu::outputSettings::readFile()
-{
-  // Initialize File Stream
-  ifstream file("output_settings.ttpgu");
-  
-  // Read in Parameters
-  std::string temp;
-  temp                    << file;
-  this->filename          << file;
-  temp                    << file;
-  this->writeFullSolution << file;
-  temp                    << file;
-  this->numberOfSlices    << file;
-  
-  // Initialize Arrays
-  this->sliceDim = new int[numberOfSlices];
-  this->slice = new int[numberOfSlices];
-  this->fileSuffix = new std::string[numberOfSlices];
-  
-  // Loop Through the Rest of the File
-  for (int i = 0; i < 3; i++)
-  {
-    temp << file;
-    for (int j = 0; j < this->numberOfSlices; j++)
-    {
-      switch (i)
-      {
-        case 0:
-          this->slideDim[j] << file;
-          break;
-        case 1:
-          this->slice[j] << file;
-          break;
-        case 2:
-          this->fileSuffix[j] << file;
-          break;
-      }
-    }
-    file.close();
-  }
-  
-  this->Dpdms << file;
-  temp        << file;
-  this->kpdms << file;
-  temp        << file;
-  this->M0    << file;
-  temp        << file;
-  this->Km    << file;
-  temp        << file;
-  this->Pc    << file;
-  temp        << file;
-  this->K     << file;
-  file.close();
-}
-
-ttgpu::inStream ttgpu::read(streamType type)
-{
-  std::string filename;
-  ifstream file;
-  
-  // Determine Which File to Read
-  switch (type)
-  {
-    case ttgpu::PHYSICS:
-      filename = "physics.ttgpu";
-      break;
-    case ttgpu::GEOMETRY:
-      filename = "geometry.ttgpu";
-      break;
-    case ttgpu::BOUNDARY_CONDITIONS:
-      filename = "boundary_conditions.ttgpu";
-      break;
-    case ttgpu::DISCRETIZATION:
-      filename = "discretization.ttgpu";
-      break;
-    case ttgpu::OUTPUT_SETTINGS:
-      filename = "output_settings.ttgpu";
-      break;
-    default:
-      std::cerr << "ttgpu: incorrect usage of read\n";
-      break; 
-  }
+  // Read Data from Files 
+  read("physics.ttgpu");
+  read("geometry.ttgpu");
+  read("boundary_conditions.ttgpu");
+  read("discretization.ttgpu");
+  read("output_settings.ttgpu");
 }
