@@ -4,6 +4,8 @@
 #include <cmath>
 #include <iostream>
 
+using namespace std;
+
 // Initial Conditions
 // Cube centered in domain with side length of 1/4 set to 1
 void stepIC(float* u,int Nx,int Ny,int Nz)
@@ -21,21 +23,21 @@ void stepIC(float* u,int Nx,int Ny,int Nz)
 }
 
 // Constant Value of u0 
-void constIC(float* u,float u0,int size)
+void constIC(float* u,float u0,int N)
 {
-  for (int i = 0; i < size; i++)
+  for (int i = 0; i < N; i++)
   {    
     u[i] = u0;
   }
 }
 
 // Variable I.C. set from file
-void varIC(float* u,std::string filename,int size)
+void varIC(float* u,std::string filename,int N)
 {
-  std::ifstream file;
+  ifstream file;
   file.open(filename);
   int i = 0;
-  for (int i = 0; i < size; i++)
+  for (int i = 0; i < N; i++)
   {
     file >> u[i];
   }
@@ -43,18 +45,18 @@ void varIC(float* u,std::string filename,int size)
 }
 
 // Square Wave Boundary Condition
-float squareWave(float t,float endTime,float ubsl,float uhigh,float ulow)
+float squareWave(float t,float T,float ubsl,float uhigh,float ulow)
 {
   // Window PO2
   float u;
   
   // Baseline
-  if (t < endTime/6 || t >= 5*endTime/6)
+  if (t < T/6 || t >= 5*T/6)
   {
     u = ubsl;
   }
   // High O2
-  else if (t < endTime/2)
+  else if (t < T/2)
   {
     u = uhigh;
   }
@@ -68,20 +70,20 @@ float squareWave(float t,float endTime,float ubsl,float uhigh,float ulow)
 }
 
 // I/O
-void print(float* u,int size,std::string filename)
+void print(float* u,int N,string filename)
 {
-  std::ofstream file;
+  ofstream file;
   file.open(filename);
-  for (int i = 0; i < size; i++)
+  for (int i = 0; i < N; i++)
   {
-    file << u[i] << std::endl;
+    file << u[i] << endl;
   }
   file.close();
 }
 
 void print(float* u,int Nx,int Ny,int Nz,int dim,int slc,std::string filename)
 {
-  std::ofstream file;
+  ofstream file;
   file.open(filename);
   for (int i = (dim==0 ? slc:0); i < (dim==0 ? slc+1:Nx); i++) 
   {
@@ -143,7 +145,7 @@ void print_scheduler::schedule(float start_time,float print_frequency)
   count++;
 }
 
-time_writer::time_writer(std::string filename)
+time_writer::time_writer(string filename)
 {
   out.open(filename);
 }
@@ -153,8 +155,36 @@ time_writer::~time_writer()
   out.close();
 }
 
-grid::grid(int Nx,int Ny,int Nz,float dx,float dy,float dz,float dt)
-  : Nx(Nx),Ny(Ny),Nz(Nz),dx(dx),dy(dy),dz(dz),dt(dt)
+grid::grid(int Nx,int Ny,int Nz,float dt,float ay,float az)
 {
-  this->size = Nx*Ny*Nz;
+  this->Nx = Nx;
+  this->Ny = Ny;
+  this->Nz = Nz;
+  this->N = Nx*Ny*Nz;
+  this->dt = dt;
+  this->dx = 1.0f/(Nx-1);
+  this->dy = ay/(Ny-1);
+  this->dz = az/(Nz-1);
+}
+
+geometry::geometry(float L,float H,float W,float l,float h)
+{
+  this->L = L;
+  this->H = H;
+  this->W = W;
+  this->l = l;
+  this->h = h;
+  this->xs = 0.0f;
+  this->ys = 0.0f;
+}
+
+geometry::geometry(float L,float H,float W,float l,float h,float xs,float ys)
+{
+  this->L = L;
+  this->H = H;
+  this->W = W;
+  this->l = l;
+  this->h = h;
+  this->xs = xs;
+  this->ys = ys;
 }

@@ -1,6 +1,13 @@
-// Solves PDE du/ds = lapl(u) + alpha*(ub-u) - beta*u/(km+u)
 #include "PDEsolve.h"
-#include "PDETools.h"
+
+#define WINDOWBC windowBC(i,j,k)
+//#define WINDOWBC fiveWindowsBC(i,j,k) // need to change domain dimensions and geometry for window spacing
+
+// Comment out if not using PDMS layer
+#define PDMS
+#define INTERFACE 5 // make sure this corresponds to number of nodes in PDMS layer
+
+// Solves PDE du/ds = lapl(u) + alpha*(ub-u) - beta*u/(km+u)
 
 // GPU Index Evaluation
 __device__ int at(int i,int j,int k)
@@ -37,21 +44,23 @@ __device__ void imex(float* u_old,float* u_new,float BC,int i,int j,int k)
   // Apply Boundary Conditions
   int n = at(i,j,k);
   // Fixed Value BC at Window 
-  if (windowBC(i,j,k))
+  if (WINDOWBC)
   {
     u_new[n] = BC;
   }
+  #ifdef PDMS 
   // Interface B.C.
-  else if (k==k_interface)
+  else if (k==INTERFACE)
   {
     u_new[n] = (u_old[n] + dt*lambda/(lambda+sigma)*(2*CDMi(u_old,i,j,k) 
              + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(1+alpha*dt*lambda/(lambda+sigma));    
   } 
   // PDMS and Zero Flux Boundaries
-  else if (k<k_interface&&k>0)
+  else if (k<INTERFACE&&k>0)
   {
     u_new[n] = (u_old[n] + dt*(lambda*CDM(u_old,i,j,k)))/(1+alpha*dt);
   } 
+  #endif
   else // Tissue and Zero Flux Boundaries
   {
     u_new[n] = (u_old[n] + dt*(CDM(u_old,i,j,k) + alpha*ub - beta*u_old[at(i,j,k)]/(km+u_old[at(i,j,k)])))/(1+alpha*dt);
@@ -73,11 +82,6 @@ __global__ void step(float* u_old,float* u_new,float BC,model mdl,grid grd,geome
   L = geo.L; l = geo.l;
   H = geo.H; h = geo.h;
   xs = geo.xs; ys = geo.ys;
-  k_interface = round(geo.th/dz);
-  if (xs==0)
-    windowBC = singleWindowBC;
-  else
-    windowBC = fiveWindowsBC;
   
   // Determine Position within array
   int ATOM_SIZE_X = Nx/(blockDim.x*gridDim.x);
@@ -99,6 +103,7 @@ __global__ void step(float* u_old,float* u_new,float BC,model mdl,grid grd,geome
         imex(u_old,u_new,BC,i,j,k);
       }
     }
+    printf("(%d,%d,%d,%d)\n",blockIdx.x,blockIdx.y,threadIdx.x,threadIdx.y);
   }
   
   __syncthreads(); 
@@ -120,7 +125,7 @@ __global__ void step(float* u_old,float* u_new,float BC,model mdl,grid grd,geome
 
 // Boundary Conditions
 // Window Boundary Condition
-__device__ bool singleWindowBC(int i,int j,int k)
+__device__ bool windowBC(int i,int j,int k)
 {   
   // Relative Window Dimensions 
   float l_ = l/L,h_ = h/L;
