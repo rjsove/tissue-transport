@@ -52,19 +52,11 @@ int main(int argc,char** argv)
   int Nx = 288; // 576, 288, 144
   int Ny = 288; // 576, 288, 144
   int Nz = 96; // 192, 96, 48 
-  float dt = 1e-8; // was 1e-6
+  float dt = 5e-7; // was 1e-6
   
   // Output Filename (user input)
   string dir = "out/PO2/";
   string filename = "steady-state";
-  // Plane Slices
-  int dimY = 1;
-  int dimZ = 2;
-  int slc = 71;
-  int slc0 = 5; // 25 um
-  int slc1 = 9; // 50 um
-  int slc2 = 13; // 75 um
-  int slc3 = 17; // 100 um
   
   // Calculate Dimensionless Parameters
   float tau = L*L/D;
@@ -131,25 +123,22 @@ int main(int argc,char** argv)
   // Time Iteration
   float t = 0.0f; int np = 1; time_writer write_time(dir+"t_"+filename+".csv"); write_time(t*tau);
   float uwin;
-  for (int nt = 1; nt < 2; nt++)
+  for (int nt = 1; t < T; nt++)
   { 
     // Boundary Condition
     //uwin = squareWave(t,T,Pbsl/P0,Phigh/P0,Plow/P0); // square wave in time
     uwin = Pbsl/P0; // constant in time
    
     // Call GPU Kernel
-    cout << "taking step...\n";
     step<<<dimGrid,dimBlock>>>(uold_d,unew_d,uwin,mdl,grd,geo);
     t += dt;
-    cout << "done step\n";
     
     // Print Solution
     if (print_time(t*tau))
-    {
+    {  
       timer timer2("Write Out");
       cout << "Writing t = " << t << "...\n";
       cudaMemcpy(u_h,unew_d,size,cudaMemcpyDeviceToHost);
-      cout << u_h[0] << endl;
       print(u_h,N,dir+filename+".csv");/*
       std::string id = (print_frequency==sim_time)? "":to_string(np);
       print(u_h,Nx,Ny,Nz,dimY,slc,dir+filename+"_yPlane"+id+".csv");

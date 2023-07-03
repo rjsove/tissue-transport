@@ -103,7 +103,6 @@ __global__ void step(float* u_old,float* u_new,float BC,model mdl,grid grd,geome
         imex(u_old,u_new,BC,i,j,k);
       }
     }
-    printf("(%d,%d,%d,%d)\n",blockIdx.x,blockIdx.y,threadIdx.x,threadIdx.y);
   }
   
   __syncthreads(); 
@@ -119,7 +118,7 @@ __global__ void step(float* u_old,float* u_new,float BC,model mdl,grid grd,geome
       }
     }
   }
-  
+
   __syncthreads(); 
 }
 

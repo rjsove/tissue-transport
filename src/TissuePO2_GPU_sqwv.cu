@@ -52,7 +52,7 @@ int main(int argc,char** argv)
   int Nx = 288; // 576, 288, 144
   int Ny = 288; // 576, 288, 144
   int Nz = 96; // 192, 96, 48 
-  float dt = 1e-8; // was 1e-6
+  float dt = 5e-7; // was 1e-6
   
   // Output Filename (user input)
   string dir = "out/PO2/";

@@ -14,21 +14,21 @@ int main(int argc,char** argv)
   timer timer1("Total");
   
   // Square Wave Parameters
-  float Pbsl = 53.2.0f; // Baseline PO2 <mmHg> 7%
+  float Pbsl = 38.0f; // Baseline PO2 <mmHg> 5%
   float Phigh = 91.2f; // High PO2 <mmHg> 12% 
   float Plow = 15.2f; // Low PO2 <mmHg> 2%
    
   // Initialize Physical Constants (user input)
   float D = 2.41e-5f; // diffusivity <cm^2/s>
   float k = 3.89e-5f; // solubility <mLO2/mL/mmHg>
-  float Dpdms = 3.40e-5f; // diffusivity <cm^2/s> [Merkel 2000]
-  float kpdms = 2.37e-4f; // solubility <mLO2/mL/mmHg> [Merkel 2000]
-  float VO2 = 1.50e-4f; // O2 consumption <mLO2/mL/s>
+  float Dpdms = 3.40e-5f; // diffusivity <cm^2/s> [Merkel 2000] 3.55e-5
+  float kpdms = 3.68e-5f; // solubility <mLO2/mL/mmHg> [Shiku 2006]
+  float VO2 = 0.75e-4f; // O2 consumption <mLO2/mL/s>
   float Pcrit = 0.5f; // critical PO2 <mmHg>
   float P0 = 48.0f; // capillary PO2 <mmHg>
   float K = 30.0f; // capillary source <mmHg/s>
-  float L = 0.52f; // tissue length <cm> regular simulation: [0.2x0.2]
-  float H = 0.44f; // tissue height <cm> five window simulation [0.52x0.44]
+  float L = 0.2f; // tissue length <cm> regular simulation: [0.2x0.2]
+  float H = 0.2f; // tissue height <cm> five window simulation [0.52x0.44]
   float W = 0.06f; // tissue depth <cm>
   float l = 0.04f; // window length <cm>
   float h = 0.02f; // window height <cm>
@@ -37,7 +37,7 @@ int main(int argc,char** argv)
   //float th = 0.004; // PDMS layer thickness <cm>
   
   // Simulation Time (user input)
-  float sim_time = 750.0f; // simulation time <s> was 360.0f
+  float sim_time = 30.0f; // simulation time <s> was 360.0f
   if (argc == 2)
     sim_time = atof(argv[1]);
   float print_frequency = sim_time; // print frequency <s> was 0.25f
@@ -52,15 +52,15 @@ int main(int argc,char** argv)
   int Nx = 288; // 576, 288, 144
   int Ny = 288; // 576, 288, 144
   int Nz = 96; // 192, 96, 48 
-  float dt = 1e-8; // was 1e-6
+  float dt = 5e-7; // was 1e-6
   
   // Output Filename (user input)
   string dir = "out/PO2/";
-  string filename = "five-windows";
-  // z-Plane Slice
-  //int dimY = 1;
+  string filename = "halfVO2";
+  // Plane Slices
+  int dimY = 1;
   int dimZ = 2;
-  //int slc = round(Ny-1)/2
+  int slc = 71;
   int slc0 = 5; // 25 um
   int slc1 = 9; // 50 um
   int slc2 = 13; // 75 um
@@ -87,9 +87,7 @@ int main(int argc,char** argv)
   float dy = ay/(Ny-1.0f);
   float dz = az/(Nz-1.0f);
   float T = sim_time/tau;
-  
-  cout << geo.xs << endl;
-  
+    
   // Print Parameters
   float ds = min(min(dx,dy),dz); 
   cout << "\n\n---Oxygen---\n\n";
@@ -109,8 +107,14 @@ int main(int argc,char** argv)
   
   // Allocate Memory on Host
   float* u_h = new float[N]();
-  constIC(u_h,1.0f,N);
-  //varIC(u_h,"out/PO2/steady-state.csv",N);
+  //varIC(u_h,"out/PO2/steady_state_5.csv",N);
+  constIC(u_h,1.0f,N);/*
+  print(u_h,Nx,Ny,Nz,dimY,slc,dir+filename+"_yPlane0.csv");
+  print(u_h,Nx,Ny,Nz,dimZ,slc0,dir+filename+"_zPlane025um0.csv");
+  print(u_h,Nx,Ny,Nz,dimZ,slc1,dir+filename+"_zPlane050um0.csv");
+  print(u_h,Nx,Ny,Nz,dimZ,slc2,dir+filename+"_zPlane075um0.csv");
+  print(u_h,Nx,Ny,Nz,dimZ,slc3,dir+filename+"_zPlane100um0.csv");//*/
+  
   
   // Allocate Memory on Device 
   float *uold_d,*unew_d;
@@ -125,7 +129,7 @@ int main(int argc,char** argv)
   dim3 dimBlock(BLOCK_SIZE_X,BLOCK_SIZE_Y,BLOCK_SIZE_Z);
 
   // Time Iteration
-  float t = 0.0f; int np = 1; time_writer write_time(dir+"t.csv"); write_time(t*tau);
+  float t = 0.0f; int np = 1; time_writer write_time(dir+"t_"+filename+".csv"); write_time(t*tau);
   float uwin;
   for (int nt = 1; t < T; nt++)
   { 
@@ -143,11 +147,14 @@ int main(int argc,char** argv)
       timer timer2("Write Out");
       cout << "Writing t = " << t << "...\n";
       cudaMemcpy(u_h,unew_d,size,cudaMemcpyDeviceToHost);
-      print(u_h,Nx,Ny,Nz,dimZ,0,dir+filename+"_zPlane000um.csv");
-      print(u_h,Nx,Ny,Nz,dimZ,slc0,dir+filename+"_zPlane025um.csv");
-      print(u_h,Nx,Ny,Nz,dimZ,slc1,dir+filename+"_zPlane050um.csv");
-      print(u_h,Nx,Ny,Nz,dimZ,slc2,dir+filename+"_zPlane075um.csv");
-      print(u_h,Nx,Ny,Nz,dimZ,slc3,dir+filename+"_zPlane100um.csv");
+      cout << u_h[0] << endl;
+      //print(u_h,N,dir+filename+".csv");/*
+      std::string id = (print_frequency==sim_time)? "":to_string(np);
+      print(u_h,Nx,Ny,Nz,dimY,slc,dir+filename+"_yPlane"+id+".csv");
+      print(u_h,Nx,Ny,Nz,dimZ,slc0,dir+filename+"_zPlane025um"+id+".csv");
+      print(u_h,Nx,Ny,Nz,dimZ,slc1,dir+filename+"_zPlane050um"+id+".csv");
+      print(u_h,Nx,Ny,Nz,dimZ,slc2,dir+filename+"_zPlane075um"+id+".csv");
+      print(u_h,Nx,Ny,Nz,dimZ,slc3,dir+filename+"_zPlane100um"+id+".csv");//*/
       write_time(t*tau);
       np++;
     }

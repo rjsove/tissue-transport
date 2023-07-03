@@ -1,1 +1,1 @@
-nvcc --std=c++11 src/timer.cpp src/PDETools.cpp src/PDEsolve.cu src/TissuePO2_GPU_step.cu -o bin/runGPU
+nvcc src/timer.cpp src/PDETools.cpp src/PDEsolve.cu src/TissuePO2_GPU_step.cu -o bin/runGPU
